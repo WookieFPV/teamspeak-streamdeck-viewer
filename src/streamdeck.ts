@@ -23,13 +23,13 @@ export const streamDeckPaintTs = async (streamDeck: StreamDeck, client: TeamSpea
 
 export const streamDeckPaint = async (streamDeck: StreamDeck, index: number, name: string, color: Colors, subText = "") => {
   try {
-    const finalBuffer = await sharp(path.resolve(__dirname, `assets/${color}.png`))
+    const finalBuffer = await sharp(path.resolve(__dirname, `../assets/${color}.png`))
       .composite([
         {
           input: Buffer.from(
             `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${streamDeck.ICON_SIZE} ${
               streamDeck.ICON_SIZE
-            }" version="1.1">
+            }">
                         <text
                             font-family="'sans-serif'"
                             font-size="20px"

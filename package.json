@@ -1,10 +1,13 @@
 {
-  "name": "@wookbot/streamdeck-node",
+  "name": "@wookbot/streamdeck-ts-viewer",
   "version": "1.0.0",
-  "description": "",
+  "description": "display Teamspeak clients on your streamdeck",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start-ts": "yarn ts-node .\\src\\index.ts",
+    "dev": "yarn ts-node-dev .\\src\\index.ts"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +22,7 @@
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3"
   }
 }
