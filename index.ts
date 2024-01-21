@@ -1,14 +1,12 @@
 import {openStreamDeck, listStreamDecks, StreamDeck,} from '@elgato-stream-deck/node'
-import {TeamSpeak} from "ts3-nodejs-library";
+import {TeamSpeak, TeamSpeakClient} from "ts3-nodejs-library";
 import {tsConnect} from "./ts-base";
 import {wait} from "./helper";
 import {paint} from "./streamdeck";
 
 import {clientStateToColor, getName} from "./assets/tsHelper";
 
-
-
-
+const clientOnDeck = new Array<TeamSpeakClient | undefined>(6)
 
 const fun = async () => {
   const [deck] = await listStreamDecks()
@@ -47,6 +45,8 @@ const drawTS = async (streamDeck: StreamDeck, ts: TeamSpeak) => {
     const client = clients[i]
     const subText = Math.floor(client.idleTime / 1000 / 60)
 
+
+    clientOnDeck[i] = client
     await paint(streamDeck, i, getName(client), clientStateToColor(client), subText)
 
   }
@@ -73,6 +73,15 @@ const run = async () => {
 
 
   const ts = await tsConnect()
+
+  streamDeck.on('down', async (keyIndex: number) => {
+    console.log('key %d down', keyIndex)
+
+    const cl = clientOnDeck[keyIndex]
+    if (cl) {
+      await ts.clientPoke(cl, "hello from se Streamdeck")
+    }
+  })
 
   while (true) {
     await drawTS(streamDeck, ts)
