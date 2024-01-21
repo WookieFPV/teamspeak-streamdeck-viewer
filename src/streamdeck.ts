@@ -1,18 +1,35 @@
-import {StreamDeck} from "@elgato-stream-deck/node";
+import { listStreamDecks, openStreamDeck, StreamDeck } from "@elgato-stream-deck/node";
 import sharp from "sharp";
 import path from "path";
-import {Colors} from "./types";
+import { Colors } from "./types";
+import { TeamSpeakClient } from "ts3-nodejs-library";
+import { clientStateToColor, getName } from "./tsHelper";
 
-export const paint = async (streamDeck: StreamDeck, index: number, name: string, color: Colors, subText = 0) => {
+export const streamDeckConnect = async () => {
+  const [deck] = await listStreamDecks()
+  const streamDeck = await openStreamDeck(deck.path)
+
+  streamDeck.on('error', (error: unknown) => {
+    console.error(error)
+  })
+  return streamDeck
+}
+
+export const streamDeckPaintTs = async (streamDeck: StreamDeck, client: TeamSpeakClient, i: number, idleTime: number) => {
+  const afkText = idleTime >= 5 ? idleTime + "m" : "";
+  return streamDeckPaint(streamDeck, i, getName(client), clientStateToColor(client), afkText)
+}
+
+
+export const streamDeckPaint = async (streamDeck: StreamDeck, index: number, name: string, color: Colors, subText = "") => {
   try {
-    const afkText = subText >= 5 ? subText + "m" : "";
     const finalBuffer = await sharp(path.resolve(__dirname, `assets/${color}.png`))
       .composite([
         {
           input: Buffer.from(
             `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${streamDeck.ICON_SIZE} ${
               streamDeck.ICON_SIZE
-            }" version="1.1">/
+            }" version="1.1">
                         <text
                             font-family="'sans-serif'"
                             font-size="20px"
@@ -29,7 +46,7 @@ export const paint = async (streamDeck: StreamDeck, index: number, name: string,
                             y="60"
                             fill="#fff"
                             text-anchor="middle"
-                            >${afkText}</text>
+                            >${subText}</text>
                     </svg>`
           ),
           top: 0,

@@ -1,5 +1,6 @@
-import {TeamSpeakClient} from "ts3-nodejs-library";
-import {Colors} from "../types";
+import { TeamSpeakClient } from "ts3-nodejs-library";
+import { Colors } from "./types";
+import { envVars } from "./envVars";
 
 const nameMapping: Record<string, string> = {
   "FK1024 | Felix": "Felix",
@@ -19,3 +20,8 @@ export const clientStateToColor = (client: TeamSpeakClient): Colors => {
     return "blue"
   }
 }
+
+export const isMainUser = (ts: TeamSpeakClient): boolean =>
+  ts.uniqueIdentifier === envVars.TS3_USER_CID
+
+

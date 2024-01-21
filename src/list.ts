@@ -1,5 +1,4 @@
-import HID from 'node-hid'
-import {listStreamDecks} from "@elgato-stream-deck/node";
+import { listStreamDecks } from "@elgato-stream-deck/node";
 /*
 console.log('RAW HID')
 for (const dev of HID.devices()) {
