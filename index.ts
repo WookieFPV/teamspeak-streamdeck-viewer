@@ -1,5 +1,75 @@
-import {openStreamDeck, listStreamDecks, } from '@elgato-stream-deck/node'
+import {openStreamDeck, listStreamDecks, StreamDeck,} from '@elgato-stream-deck/node'
+import path from 'path'
 import sharp from 'sharp'
+
+const colors = {
+  black: "black",
+  blue: "blue",
+  light_blue: "light_blue",
+  red: "red",
+  none: "none"
+} as const
+
+type Colors = keyof typeof colors
+
+const finalBufferOffline = ()=> sharp(path.resolve(__dirname, `assets/black.png`))
+  .composite( [
+    {
+      input: Buffer.from(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" version="1.1">/
+                        <text
+                            font-family="'sans-serif'"
+                            font-size="20px"
+							font-weight="bold"
+                            x="40"
+                            y="50"
+                            fill="#fff"
+                            text-anchor="middle"
+							stroke="#666"
+                            ></text>
+                    </svg>`
+      ),
+      top: 0,
+      left: 0,
+    },
+  ])
+  .flatten()
+  .raw()
+  .toBuffer()
+
+const paint = async (streamDeck: StreamDeck, index: number, name: string, color: Colors) => {
+  try {
+    const finalBuffer = color === "none"? await finalBufferOffline() : await sharp(path.resolve(__dirname, `assets/${color}.png`))
+      .composite(  [
+        {
+          input: Buffer.from(
+            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${streamDeck.ICON_SIZE} ${
+              streamDeck.ICON_SIZE
+            }" version="1.1">/
+                        <text
+                            font-family="'sans-serif'"
+                            font-size="20px"
+							font-weight="bold"
+                            x="40"
+                            y="50"
+                            fill="#fff"
+                            text-anchor="middle"
+							stroke="#666"
+                            >${name}</text>
+                    </svg>`
+          ),
+          top: 0,
+          left: 0,
+        },
+      ])
+      .flatten()
+      .raw()
+      .toBuffer()
+    await streamDeck.fillKeyBuffer(index, finalBuffer, {format: 'rgba'})
+  } catch (error) {
+    console.error(error)
+  }
+}
 
 const fun = async () => {
   const [deck] = await listStreamDecks()
@@ -16,37 +86,7 @@ const fun = async () => {
     console.log('key %d up', keyIndex)
     //await streamDeck.fillKeyColor(keyIndex, 255, 0, 0)
 
-    try {
-      const finalBuffer = await sharp(require("./assets/vogel.png"))
-        .composite([
-          {
-            input: Buffer.from(
-              `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${streamDeck.ICON_SIZE} ${
-                streamDeck.ICON_SIZE
-              }" version="1.1">/
-                        <text
-                            font-family="'sans-serif'"
-                            font-size="20px"
-							font-weight="bold"
-                            x="${streamDeck.ICON_SIZE / 3}"
-                            y="${streamDeck.ICON_SIZE - 5}"
-                            fill="#fff"
-                            text-anchor="middle"
-							stroke="#666"
-                            >Wookie</text>
-                    </svg>`
-            ),
-            top: 0,
-            left: 0,
-          },
-        ])
-        .flatten()
-        .raw()
-        .toBuffer()
-      await streamDeck.fillKeyBuffer(keyIndex, finalBuffer, { format: 'rgba' })
-    } catch (error) {
-      console.error(error)
-    }
+
   })
 
 // Fired whenever an error is detected by the `node-hid` library.
@@ -55,11 +95,20 @@ const fun = async () => {
     console.error(error)
   })
 
-// Fill the first button form the left in the first row with a solid red color. This is asynchronous.
-  await streamDeck.fillKeyColor(4, 255, 0, 0)
-  console.log('Successfully wrote a red square to key 4.')
-
+  return streamDeck
 }
 
 
-fun()
+const run = async () => {
+  const streamDeck = await fun()
+
+  await paint(streamDeck, 0, "wookie", "red")
+  await paint(streamDeck, 1, "N1m4", "blue")
+  await paint(streamDeck, 2, "jonas", "light_blue")
+  await paint(streamDeck, 3, "felix", "none")
+  await paint(streamDeck, 4, "luki", "red")
+  await paint(streamDeck, 5, "Peter", "red")
+}
+
+
+run()
