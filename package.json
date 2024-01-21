@@ -12,8 +12,10 @@
     "@elgato-stream-deck/node": "^6.0.0",
     "@julusian/jpeg-turbo": "^2.0.0",
     "@types/node": "^20.11.5",
+    "dotenv": "^16.3.2",
     "node-hid": "^3.0.0",
-    "sharp": "^0.33.2"
+    "sharp": "^0.33.2",
+    "ts3-nodejs-library": "^3.5.1"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
