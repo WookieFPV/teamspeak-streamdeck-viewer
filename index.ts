@@ -1,86 +1,14 @@
 import {openStreamDeck, listStreamDecks, StreamDeck,} from '@elgato-stream-deck/node'
-import {TeamSpeak, TeamSpeakClient} from "ts3-nodejs-library";
-import path from 'path'
-import sharp from 'sharp'
+import {TeamSpeak} from "ts3-nodejs-library";
 import {tsConnect} from "./ts-base";
 import {wait} from "./helper";
+import {paint} from "./streamdeck";
 
-const colors = {
-  black: "black",
-  blue: "blue",
-  light_blue: "light_blue",
-  red: "red",
-  orange: "orange"
-} as const
+import {clientStateToColor, getName} from "./assets/tsHelper";
 
-type Colors = keyof typeof colors
 
-const finalBufferOffline = () => sharp(path.resolve(__dirname, `assets/black.png`))
-  .composite([
-    {
-      input: Buffer.from(
-        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" version="1.1">/
-                        <text
-                            font-family="'sans-serif'"
-                            font-size="20px"
-							font-weight="bold"
-                            x="40"
-                            y="50"
-                            fill="#fff"
-                            text-anchor="middle"
-							stroke="#666"
-                            ></text>
-                    </svg>`
-      ),
-      top: 0,
-      left: 0,
-    },
-  ])
-  .flatten()
-  .raw()
-  .toBuffer()
 
-const paint = async (streamDeck: StreamDeck, index: number, name: string, color: Colors, subText = 0) => {
-  try {
-    const afkText = subText >= 5 ? subText + "m" : "";
-    const finalBuffer = await sharp(path.resolve(__dirname, `assets/${color}.png`))
-      .composite([
-        {
-          input: Buffer.from(
-            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${streamDeck.ICON_SIZE} ${
-              streamDeck.ICON_SIZE
-            }" version="1.1">/
-                        <text
-                            font-family="'sans-serif'"
-                            font-size="20px"
-							              font-weight="bold"
-                            x="40"
-                            y="40"
-                            fill="#fff"
-                            text-anchor="middle"
-                            >${name}</text>
-                            <text
-                            font-family="'sans-serif'"
-                            font-size="14px"
-                            x="40"
-                            y="60"
-                            fill="#fff"
-                            text-anchor="middle"
-                            >${afkText}</text>
-                    </svg>`
-          ),
-          top: 0,
-          left: 0,
-        },
-      ])
-      .flatten()
-      .raw()
-      .toBuffer()
-    await streamDeck.fillKeyBuffer(index, finalBuffer, {format: 'rgba'})
-  } catch (error) {
-    console.error(error)
-  }
-}
+
 
 const fun = async () => {
   const [deck] = await listStreamDecks()
@@ -107,25 +35,6 @@ const fun = async () => {
   return streamDeck
 }
 
-const nameMapping: Record<string, string> = {
-  "FK1024 | Felix": "Felix",
-  "N1m4": "Nima"
-}
-
-const getName = (client: TeamSpeakClient): string => nameMapping[client.nickname] ?? client.nickname
-
-export const clientStateToColor = (client: TeamSpeakClient): Colors => {
-  if (client.flagTalking) {
-    return "light_blue"
-  } else if (client.inputMuted && !client.outputMuted) {
-    return "orange"
-  } else if (client.outputMuted) {
-    return "red"
-  } else {
-    return "blue"
-  }
-}
-
 const drawTS = async (streamDeck: StreamDeck, ts: TeamSpeak) => {
   const clientsRaw = await ts.clientList();
   const wookie = clientsRaw.find(client => client.nickname.includes("Wookie"))
@@ -137,7 +46,9 @@ const drawTS = async (streamDeck: StreamDeck, ts: TeamSpeak) => {
     if (i >= 6) continue
     const client = clients[i]
     const subText = Math.floor(client.idleTime / 1000 / 60)
+
     await paint(streamDeck, i, getName(client), clientStateToColor(client), subText)
+
   }
   for (let i = clients.length; i < 6; i++) {
     await streamDeck.clearKey(i)
@@ -173,22 +84,3 @@ const run = async () => {
 
 run()
 
-
-/*
-  if(!done){
-
-    const nima =  clients.find(c=>c.nickname.includes("FK1024"))
-
-    if(nima) {
-      const ch = await ts.getChannelByName("kacken")
-      if(!ch) {
-        console.warn("no ch:(")
-        return
-      }
-      // clientMove(nima,ch)
-      console.log("mute felix")
-      await ts.clientEdit(nima,{clientIsTalker:false})
-      done = true
-    }
-  }
- */
