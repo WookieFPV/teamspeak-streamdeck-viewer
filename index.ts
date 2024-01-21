@@ -101,8 +101,15 @@ const fun = async () => {
   return streamDeck
 }
 
+const nameMapping: Record<string, string> = {
+  "FK1024 | Felix": "Felix",
+  "N1m4": "Nima"
+}
+
+const getName = (client:TeamSpeakClient):string => nameMapping[client.nickname] ?? client.nickname
+
 export const clientStateToColor = (client: TeamSpeakClient): Colors => {
- if (client.flagTalking) {
+  if (client.flagTalking) {
     return "light_blue"
   } else if (client.inputMuted && !client.outputMuted) {
     return "orange"
@@ -123,12 +130,21 @@ const drawTS = async (streamDeck: StreamDeck, ts: TeamSpeak) => {
 
 
   for (let i = 0; i < clients.length; i++) {
+    if(i>=6) continue
     const client = clients[i]
-    await paint(streamDeck, i, client.nickname, clientStateToColor(client))
+    await paint(streamDeck, i, getName(client), clientStateToColor(client))
   }
   for (let i = clients.length; i < 6; i++) {
     await streamDeck.clearKey(i)
   }
+  if (clientList.length === 0) {
+    console.log("no one online, sleep some time...")
+    await wait(10 * 1000)
+  } else if (!clients.find((client) => client.nickname === "Wookie")) {
+    console.log("no wookie, sleep some time...")
+    await wait(5 * 1000)
+  }
+
 }
 
 const run = async () => {
@@ -142,7 +158,7 @@ const run = async () => {
   const ts = await tsConnect()
 
   while (true) {
-    await drawTS(streamDeck,ts)
+    await drawTS(streamDeck, ts)
     await wait(500);
   }
 
@@ -150,3 +166,24 @@ const run = async () => {
 
 
 run()
+
+
+
+/*
+  if(!done){
+
+    const nima =  clients.find(c=>c.nickname.includes("FK1024"))
+
+    if(nima) {
+      const ch = await ts.getChannelByName("kacken")
+      if(!ch) {
+        console.warn("no ch:(")
+        return
+      }
+      // clientMove(nima,ch)
+      console.log("mute felix")
+      await ts.clientEdit(nima,{clientIsTalker:false})
+      done = true
+    }
+  }
+ */
