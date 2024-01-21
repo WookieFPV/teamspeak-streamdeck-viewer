@@ -40,8 +40,9 @@ const finalBufferOffline = () => sharp(path.resolve(__dirname, `assets/black.png
   .raw()
   .toBuffer()
 
-const paint = async (streamDeck: StreamDeck, index: number, name: string, color: Colors) => {
+const paint = async (streamDeck: StreamDeck, index: number, name: string, color: Colors, subText = 0) => {
   try {
+    const afkText = subText >= 5 ? subText + "m" : "";
     const finalBuffer = await sharp(path.resolve(__dirname, `assets/${color}.png`))
       .composite([
         {
@@ -52,13 +53,20 @@ const paint = async (streamDeck: StreamDeck, index: number, name: string, color:
                         <text
                             font-family="'sans-serif'"
                             font-size="20px"
-							font-weight="bold"
+							              font-weight="bold"
                             x="40"
-                            y="50"
+                            y="40"
                             fill="#fff"
                             text-anchor="middle"
-							stroke="#666"
                             >${name}</text>
+                            <text
+                            font-family="'sans-serif'"
+                            font-size="14px"
+                            x="40"
+                            y="60"
+                            fill="#fff"
+                            text-anchor="middle"
+                            >${afkText}</text>
                     </svg>`
           ),
           top: 0,
@@ -88,8 +96,6 @@ const fun = async () => {
   streamDeck.on('up', async (keyIndex: number) => {
     console.log('key %d up', keyIndex)
     //await streamDeck.fillKeyColor(keyIndex, 255, 0, 0)
-
-
   })
 
 // Fired whenever an error is detected by the `node-hid` library.
@@ -106,7 +112,7 @@ const nameMapping: Record<string, string> = {
   "N1m4": "Nima"
 }
 
-const getName = (client:TeamSpeakClient):string => nameMapping[client.nickname] ?? client.nickname
+const getName = (client: TeamSpeakClient): string => nameMapping[client.nickname] ?? client.nickname
 
 export const clientStateToColor = (client: TeamSpeakClient): Colors => {
   if (client.flagTalking) {
@@ -122,22 +128,22 @@ export const clientStateToColor = (client: TeamSpeakClient): Colors => {
 
 const drawTS = async (streamDeck: StreamDeck, ts: TeamSpeak) => {
   const clientsRaw = await ts.clientList();
-  const clients = clientsRaw.filter(c => c.type == 0)
+  const wookie = clientsRaw.find(client => client.nickname.includes("Wookie"))
+  const clients = clientsRaw.filter(c => c.type == 0).filter((c => !wookie || c.cid === wookie?.cid))
 
-
-  const clientList = clients.map(f => f.nickname)
-  console.log("clients:" + JSON.stringify(clientList))
-
+  const clientNames = clients.map(f => f.nickname)
 
   for (let i = 0; i < clients.length; i++) {
-    if(i>=6) continue
+    if (i >= 6) continue
     const client = clients[i]
-    await paint(streamDeck, i, getName(client), clientStateToColor(client))
+    const subText = Math.floor(client.idleTime / 1000 / 60)
+    await paint(streamDeck, i, getName(client), clientStateToColor(client), subText)
   }
   for (let i = clients.length; i < 6; i++) {
     await streamDeck.clearKey(i)
   }
-  if (clientList.length === 0) {
+
+  if (clientNames.length === 0) {
     console.log("no one online, sleep some time...")
     await wait(10 * 1000)
   } else if (!clients.find((client) => client.nickname === "Wookie")) {
@@ -166,7 +172,6 @@ const run = async () => {
 
 
 run()
-
 
 
 /*
