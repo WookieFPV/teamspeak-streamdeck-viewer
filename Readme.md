@@ -18,6 +18,7 @@ Additionally, when connected, it provides a real-time display of all clients con
 
 * **Filter client based on your Channel**
 * **Idle time of clients**
+* **Show Time if no User is online**
 
 ## Raspberry Pi (Linux)
 
@@ -31,4 +32,6 @@ Additionally, when connected, it provides a real-time display of all clients con
 ## Roadmap
 
 - [x] Extend support for Raspberry Pi.
+- [X] Validate .env file at runtime
+- [x] add clock that is shown if no users are online
 - [ ] To be determined (tbd).
