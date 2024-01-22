@@ -10,6 +10,8 @@ let envSchema = z.object({
   TS3_USERNAME: z.string(),
   TS3_USER_CID: z.string().optional(),
 
+  DEBUG_UI: z.string().optional(),
+
   STREAMDECK_FONT: z.string().optional(),
   STREAMDECK_USER_FONTSIZE: z.string().optional(),
   STREAMDECK_AFK_FONTSIZE: z.string().optional(),
