@@ -1,7 +1,7 @@
 import { StreamDeck } from "@elgato-stream-deck/node";
 import { TeamSpeak } from "ts3-nodejs-library";
 import { isMainUser } from "./tsHelper";
-import { streamDeckPaintTs } from "../streamdeck";
+import { drawClock, streamDeckPaintTs } from "../streamdeck";
 import { wait } from "../helper";
 import { staticData } from "../index";
 
@@ -20,12 +20,15 @@ export const TsDrawClients = async (streamDeck: StreamDeck, ts: TeamSpeak) => {
     await streamDeckPaintTs(streamDeck, client, i, idleTime)
   }
 
-  for (let i = clients.length; i < streamDeck.NUM_KEYS; i++) {
-    await streamDeck.clearKey(i)
+  if(clients.length !== 0){
+    for (let i = clients.length; i < streamDeck.NUM_KEYS; i++) {
+      await streamDeck.clearKey(i)
+    }
   }
 
   if (clients.length === 0) {
     console.log("no one online: sleep some time...")
+    await drawClock(streamDeck)
     await wait(10 * 1000)
   } else if (!clients.find(isMainUser)) {
     console.log("mainUser offline: sleep some time...")

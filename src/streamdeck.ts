@@ -75,3 +75,46 @@ export const streamDeckPaint = async (streamDeck: StreamDeck, index: number, nam
     console.error(error)
   }
 }
+export const drawClock = async (streamDeck: StreamDeck) => {
+  try {
+    const date = new Date()
+    const hours = date.getHours().toString().padStart(2, "0")
+    const mins = date.getMinutes().toString().padStart(2, "0")
+
+    await renderChar(streamDeck, hours, 0)
+    await renderChar(streamDeck, ":", 1)
+    await renderChar(streamDeck, mins, 2)
+  } catch (error) {
+    console.error(error)
+  }
+
+}
+
+
+const renderChar = async (streamDeck: StreamDeck, char: String, index: number) => {
+  const finalBuffer = await sharp(path.resolve(__dirname, `../assets/black.png`))
+    .composite([
+      {
+        input: Buffer.from(
+          `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${streamDeck.ICON_SIZE} ${streamDeck.ICON_SIZE}">
+              <text
+                font-family="${fontSettings.user.family}"
+                font-size="50px"
+                font-weight="bold"
+                dx="50%"
+                dy="75%"
+                fill="#fff"
+                text-anchor="middle"
+              >${char}
+              </text>
+            </svg>`
+        ),
+        top: 0,
+        left: 0,
+      },
+    ])
+    .flatten()
+    .raw()
+    .toBuffer()
+  return streamDeck.fillKeyBuffer(index, finalBuffer, {format: 'rgba'})
+}
