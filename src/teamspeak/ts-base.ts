@@ -1,5 +1,5 @@
 import { QueryProtocol, TeamSpeak } from "ts3-nodejs-library";
-import { envVars } from "./envVars";
+import { envVars } from "../envVars";
 
 
 

@@ -1,6 +1,6 @@
 import { TeamSpeakClient } from "ts3-nodejs-library";
-import { Colors } from "./types";
-import { envVars } from "./envVars";
+import { Colors } from "../types";
+import { envVars } from "../envVars";
 
 const nameMapping: Record<string, string> = {
   "FK1024 | Felix": "Felix",

@@ -4,12 +4,12 @@
   "description": "display Teamspeak clients on your streamdeck",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsup src/index.ts",
     "start": "node dist/index.js",
-    "start-ts": "yarn ts-node .\\src\\index.ts",
-    "dev": "yarn ts-node-dev .\\src\\index.ts"
+    "build-watch": "tsup src/index.ts --watch",
+    "start-watch": "nodemon dist/index.js"
   },
-  "author": "",
+  "author": "Lukas Müller",
   "license": "ISC",
   "dependencies": {
     "@elgato-stream-deck/node": "^6.0.0",
@@ -17,12 +17,12 @@
     "@types/node": "^20.11.5",
     "dotenv": "^16.3.2",
     "node-hid": "^3.0.0",
+    "nodemon": "^3.0.3",
     "sharp": "^0.33.2",
     "ts3-nodejs-library": "^3.5.1"
   },
   "devDependencies": {
-    "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
+    "tsup": "^8.0.1",
     "typescript": "^5.3.3"
   }
 }

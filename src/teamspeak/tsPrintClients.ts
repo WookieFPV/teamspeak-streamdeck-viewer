@@ -1,9 +1,9 @@
 import { StreamDeck } from "@elgato-stream-deck/node";
 import { TeamSpeak } from "ts3-nodejs-library";
 import { isMainUser } from "./tsHelper";
-import { streamDeckPaintTs } from "./streamdeck";
-import { wait } from "./helper";
-import { staticData } from "./index";
+import { streamDeckPaintTs } from "../streamdeck";
+import { wait } from "../helper";
+import { staticData } from "../index";
 
 export const TsDrawClients = async (streamDeck: StreamDeck, ts: TeamSpeak) => {
   const clientsRaw = (await ts.clientList()).filter(c => c.type === 0)

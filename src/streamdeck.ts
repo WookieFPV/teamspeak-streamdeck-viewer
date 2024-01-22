@@ -3,7 +3,7 @@ import sharp from "sharp";
 import path from "path";
 import { Colors } from "./types";
 import { TeamSpeakClient } from "ts3-nodejs-library";
-import { clientStateToColor, getName } from "./tsHelper";
+import { clientStateToColor, getName } from "./teamspeak/tsHelper";
 
 export const streamDeckConnect = async () => {
   const [deck] = await listStreamDecks()

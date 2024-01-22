@@ -1,8 +1,8 @@
 import { TeamSpeakClient } from "ts3-nodejs-library";
-import { tsConnect } from "./ts-base";
+import { tsConnect } from "./teamspeak/ts-base";
 import { wait } from "./helper";
 import { streamDeckConnect } from "./streamdeck";
-import { TsDrawClients } from "./tsPrintClients";
+import { TsDrawClients } from "./teamspeak/tsPrintClients";
 
 
 export const staticData = {
@@ -11,12 +11,13 @@ export const staticData = {
 }
 
 const run = async () => {
+  console.log("started")
   const streamDeck = await streamDeckConnect()
   await streamDeck.clearPanel()
 
-  console.log("ts ...")
+  console.log("ts connect...")
   const ts = await tsConnect()
-  console.log("ts done")
+  console.log("ts Connected")
 
   streamDeck.on('down', async (keyIndex: number) => {
     const cl = staticData.clientOnDeck[keyIndex]
@@ -40,5 +41,3 @@ const run = async () => {
 }
 
 run()
-
-// await ts.clientPoke(cl, "hello from se Streamdeck")
