@@ -2,7 +2,6 @@ import { QueryProtocol, TeamSpeak } from "ts3-nodejs-library";
 import { envVars } from "../envVars";
 
 
-
 export const tsConnect = async () =>
   TeamSpeak.connect({
     host: envVars.TS3_HOST,
