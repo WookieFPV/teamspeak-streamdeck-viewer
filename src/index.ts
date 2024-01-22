@@ -15,9 +15,7 @@ const run = async () => {
   const streamDeck = await streamDeckConnect()
   await streamDeck.clearPanel()
 
-  console.log("ts connect...")
   const ts = await tsConnect()
-  console.log("ts Connected")
 
   streamDeck.on('down', async (keyIndex: number) => {
     const cl = staticData.clientOnDeck[keyIndex]

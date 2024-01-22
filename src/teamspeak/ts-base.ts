@@ -2,8 +2,9 @@ import { QueryProtocol, TeamSpeak } from "ts3-nodejs-library";
 import { envVars } from "../envVars";
 
 
-export const tsConnect = async () =>
-  TeamSpeak.connect({
+export const tsConnect = async () => {
+  console.log(`ts connect (${envVars.TS3_HOST})`)
+  const ts = await TeamSpeak.connect({
     host: envVars.TS3_HOST,
     queryport: 10011,
     serverport: 9987,
@@ -16,3 +17,6 @@ export const tsConnect = async () =>
     //an error occurred during connecting
     throw e
   })
+  console.log("ts Connected")
+  return ts
+}
