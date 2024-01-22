@@ -7,6 +7,7 @@ import { clientStateToColor, getName } from "./tsHelper";
 
 export const streamDeckConnect = async () => {
   const [deck] = await listStreamDecks()
+  if(!deck) throw new Error("No Streamdeck connected")
   const streamDeck = await openStreamDeck(deck.path)
 
   streamDeck.on('error', (error: unknown) => {
