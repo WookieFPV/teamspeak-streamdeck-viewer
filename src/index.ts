@@ -4,6 +4,7 @@ import { wait, waitForNetwork } from "./helper";
 import { drawClock, streamDeckConnect } from "./streamdeck";
 import { TsDrawClients } from "./teamspeak/tsPrintClients";
 import { envVars } from "./envVars";
+import { isMainUser } from "./teamspeak/tsHelper";
 
 export const staticData = {
   clientOnDeck: new Array<TeamSpeakClient | undefined>(6),
@@ -59,6 +60,8 @@ const run = async () => {
       console.log("no one online: sleep some time...")
       await drawClock(streamDeck)
       await wait(30 * 1000)
+    } else if (clients.find(isMainUser)) {
+      await wait(1000);
     } else {
       await wait(60 * 1000);
     }
