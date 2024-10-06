@@ -3,11 +3,10 @@ import { z } from "zod";
 // dotenv is loaded when used because esbuild is super optimizing imports...
 dotenv.config()
 
-let envSchema = z.object({
-  TS3_HOST: z.string(),
-  TS3_PASSWORD: z.string(),
-  TS3_NICKNAME: z.string().optional(),
-  TS3_USERNAME: z.string(),
+const envSchema = z.object({
+  BACKEND_URL: z.string(),
+  BACKEND_WS_URL: z.string(),
+  BACKEND_TOKEN: z.string(),
   TS3_USER_CID: z.string().optional(),
 
   DEBUG_UI: z.string().optional(),

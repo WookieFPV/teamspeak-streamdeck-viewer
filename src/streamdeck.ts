@@ -2,9 +2,9 @@ import { listStreamDecks, openStreamDeck, StreamDeck } from "@elgato-stream-deck
 import sharp from "sharp";
 import path from "path";
 import { Colors } from "./types";
-import { TeamSpeakClient } from "ts3-nodejs-library";
 import { clientStateToColor, getName } from "./teamspeak/tsHelper";
 import { envVars } from "./envVars";
+import {TeamSpeakClient} from "./teamspeak/teamspeakTypes";
 
 export const streamDeckConnect = async () => {
   const [deck] = await listStreamDecks()
@@ -32,7 +32,6 @@ const fontSettings = {
     family: envVars.STREAMDECK_FONT ?? 'sans-serif',
     size: envVars.STREAMDECK_AFK_FONTSIZE ?? '14px'
   },
-
 }
 
 export const streamDeckPaint = async (streamDeck: StreamDeck, index: number, name: string, color: Colors, subText = "") => {
