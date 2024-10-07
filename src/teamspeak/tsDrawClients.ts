@@ -3,7 +3,7 @@ import {isMainUser} from "./tsHelper";
 import {drawClock, streamDeckPaintTs} from "../streamdeck";
 import {staticData} from "../index";
 import {TeamSpeakClient} from "./teamspeakTypes";
-import {getTs3Clients} from "./ts-base";
+import {getTs3Clients} from "./tsApi";
 
 export const TsDrawClients = async (streamDeck: StreamDeck): Promise<TeamSpeakClient[]> => {
     const clientsRaw = await getTs3Clients()
