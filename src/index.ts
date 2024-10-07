@@ -2,7 +2,7 @@ import {wait, waitForNetwork} from "./helper";
 import {streamDeckConnect} from "./streamdeck";
 import {TsDrawClients} from "./teamspeak/tsDrawClients";
 import {envVars} from "./envVars";
-import {isMainUser} from "./teamspeak/tsHelper";
+import {getPollingDelay} from "./teamspeak/tsHelper";
 import {TeamSpeakClient} from "./teamspeak/teamspeakTypes";
 import WebSocket from "ws"
 import {TsWsEvent} from "./teamspeak/WsEvent";
@@ -61,16 +61,7 @@ const run = async () => {
     while (true) {
         console.log("polling...")
         const clients = await TsDrawClients(streamDeck)
-
-        if (clients.length === 0) {
-            console.log("no one online: sleep some time...")
-            await wait(60 * 1000)
-        } else if (clients.find(isMainUser)) {
-            await wait(3 * 1000);
-        } else {
-            await wait(60 * 1000);
-        }
-
+        await wait(getPollingDelay(clients))
     }
 }
 
