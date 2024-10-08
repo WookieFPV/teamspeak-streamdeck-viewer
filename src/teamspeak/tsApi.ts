@@ -2,13 +2,17 @@ import wretch from "wretch"
 import {envVars} from "../envVars";
 import {TeamSpeakChannel, TeamSpeakClient} from "./teamspeakTypes";
 
-const ts3Api = wretch(envVars.BACKEND_URL) // Base url
+const tsFetcher = wretch(envVars.BACKEND_URL)
     .auth(`Bearer ${envVars.BACKEND_TOKEN}`)
     .options({credentials: "include", mode: "cors"})
 
-export const getTs3Clients = (): Promise<TeamSpeakClient[]> =>
-    ts3Api.get("/ts/users").json()
+const getClients = (): Promise<TeamSpeakClient[]> =>
+    tsFetcher.get("/ts/users").json()
 
-export const getTs3Channels = (): Promise<TeamSpeakChannel[]> =>
-    ts3Api.get("/ts/channels").json()
+const getChannels = (): Promise<TeamSpeakChannel[]> =>
+    tsFetcher.get("/ts/channels").json()
 
+export const ts3Api = {
+    getClients,
+    getChannels
+}

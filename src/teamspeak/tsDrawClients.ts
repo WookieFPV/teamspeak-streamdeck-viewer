@@ -3,10 +3,10 @@ import {isMainUser} from "./tsHelper";
 import {drawClock, streamDeckPaintTs} from "../streamdeck";
 import {staticData} from "../index";
 import {TeamSpeakClient} from "./teamspeakTypes";
-import {getTs3Clients} from "./tsApi";
+import {getTsClients} from "./tsQueryClient";
 
-export const TsDrawClients = async (streamDeck: StreamDeck): Promise<TeamSpeakClient[]> => {
-    const clientsRaw = await getTs3Clients()
+export const TsDrawClients = async (streamDeck: StreamDeck, forceRefresh = false): Promise<TeamSpeakClient[]> => {
+    const clientsRaw = await getTsClients({forceRefresh})
 
     const mainUser = clientsRaw.find(isMainUser)
     const clients = clientsRaw.filter(c => !mainUser || c.cid === mainUser?.cid)
