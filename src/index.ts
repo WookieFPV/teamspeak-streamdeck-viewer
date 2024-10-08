@@ -6,6 +6,7 @@ import {getPollingDelay} from "./teamspeak/tsHelper";
 import {TeamSpeakClient} from "./teamspeak/teamspeakTypes";
 import WebSocket from "ws"
 import {TsWsEvent} from "./teamspeak/WsEvent";
+import {config} from "./config";
 
 export const staticData = {
     clientOnDeck: new Array<TeamSpeakClient | undefined>(6),
@@ -39,15 +40,15 @@ const run = async () => {
         switch (event.type) {
             case "clientConnect":
                 console.log(`client connect: ${event.e.client.clientNickname}`)
-                TsDrawClients(streamDeck)
+                TsDrawClients(streamDeck).catch(console.warn)
                 break
             case "clientDisconnect":
                 console.log(`client disconnect: ${event.e.client?.clientNickname}`)
-                TsDrawClients(streamDeck)
+                TsDrawClients(streamDeck).catch(console.warn)
                 break
             case "clientMoved":
                 console.log(`client moved: ${event.e.client?.clientNickname} [${event.e.channel.channelName}]`)
-                TsDrawClients(streamDeck)
+                TsDrawClients(streamDeck).catch(console.warn)
                 break
             case "connected":
                 console.log(`connected`)
@@ -60,8 +61,15 @@ const run = async () => {
 
     while (true) {
         console.log("polling...")
-        const clients = await TsDrawClients(streamDeck)
-        await wait(getPollingDelay(clients))
+        try {
+            const clients = await TsDrawClients(streamDeck)
+            await wait(getPollingDelay(clients))
+        } catch (err) {
+            console.warn(err)
+            await wait(config.idleTimeError)
+
+
+        }
     }
 }
 
