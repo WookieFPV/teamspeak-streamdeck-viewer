@@ -9,10 +9,10 @@ export type TeamSpeakClient = {
      flagTalking: boolean
      inputMuted: boolean
      outputMuted: boolean
- */
+    */
     clid: string
     cid: string
-    clientDatabaseId: string
+    // clientDatabaseId: string
     clientNickname: string
     clientType: number
     clientAway: boolean
@@ -20,27 +20,27 @@ export type TeamSpeakClient = {
     clientFlagTalking: boolean
     clientInputMuted: boolean
     clientOutputMuted: boolean
-    clientInputHardware: boolean
-    clientOutputHardware: boolean
-    clientTalkPower: number
-    clientIsTalker: boolean
-    clientIsPrioritySpeaker: 0
-    clientIsRecording: boolean
-    clientIsChannelCommander: boolean
+    //  clientInputHardware: boolean
+    //  clientOutputHardware: boolean
+    //  clientTalkPower: number
+    // clientIsTalker: boolean
+    // clientIsPrioritySpeaker: 0
+    // clientIsRecording: boolean
+    // clientIsChannelCommander: boolean
     clientUniqueIdentifier: string
-    clientServergroups: string[]
-    clientChannelGroupId: string
-    clientChannelGroupInheritedChannelId: string
-    clientVersion: string
-    clientPlatform: string
+    // clientServergroups: string[]
+    // clientChannelGroupId: string
+    // clientChannelGroupInheritedChannelId: string
+    // clientVersion: string
+    // clientPlatform: string
     clientIdleTime: number
-    clientCreated: number
-    clientLastconnected: number
-    clientCountry: string | undefined
+    // clientCreated: number
+    // clientLastconnected: number
+    //clientCountry: string | undefined
     // clientEstimatedLocation: string | undefined
     connectionClientIp: string
     // clientBadges: string
-    clientIconId?: string
+    //clientIconId?: string
 }
 
 export type TeamSpeakChannel = {

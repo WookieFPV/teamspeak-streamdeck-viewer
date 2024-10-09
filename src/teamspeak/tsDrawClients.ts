@@ -1,13 +1,10 @@
-import {StreamDeck} from "@elgato-stream-deck/node";
 import {isMainUser} from "./tsHelper";
-import {drawClock, streamDeckPaintTs} from "../streamdeck";
-import {staticData} from "../index";
+import {drawClock, streamDeckPaintTs} from "~/streamdeck/painStreamdeck";
 import {TeamSpeakClient} from "./teamspeakTypes";
-import {getTsClients} from "./tsQueryClient";
+import {getStreamdeck} from "~/streamdeck/getStreamdeck";
 
-export const TsDrawClients = async (streamDeck: StreamDeck, forceRefresh = false): Promise<TeamSpeakClient[]> => {
-    const clientsRaw = await getTsClients({forceRefresh})
-
+export const TsDrawClients = async (clientsRaw: TeamSpeakClient[]): Promise<void> => {
+    const streamDeck = await getStreamdeck()
     const mainUser = clientsRaw.find(isMainUser)
     const clients = clientsRaw.filter(c => !mainUser || c.cid === mainUser?.cid)
 
@@ -16,7 +13,7 @@ export const TsDrawClients = async (streamDeck: StreamDeck, forceRefresh = false
         if (i >= streamDeck.NUM_KEYS) continue;
         const idleTime = Math.floor(client.clientIdleTime / 1000 / 60)
 
-        staticData.clientOnDeck[i] = client
+        //staticData.clientOnDeck[i] = client
         await streamDeckPaintTs(streamDeck, client, i, idleTime)
     }
 
@@ -27,5 +24,4 @@ export const TsDrawClients = async (streamDeck: StreamDeck, forceRefresh = false
     } else {
         await drawClock(streamDeck)
     }
-    return clients
 }

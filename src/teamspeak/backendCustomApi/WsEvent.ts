@@ -1,17 +1,11 @@
-import {TeamSpeakChannel, TeamSpeakClient} from "./teamspeakTypes";
+import {TeamSpeakChannel, TeamSpeakClient} from "../teamspeakTypes";
 
-export type TsWsEvent = {
-    type: "clientConnect",
-    e: ClientConnect
-} | {
-    type: "clientDisconnect"
-    e: ClientDisconnect
-} | {
-    type: "clientMoved",
-    e: ClientMoved
-} | {
-    type: "connected"
-}
+export type TsWsEventConnect = { type: "clientConnect", e: ClientConnect }
+export type TsWsEventDisconnect = { type: "clientDisconnect", e: ClientDisconnect }
+export type TsWsEventMoved = { type: "clientMoved", e: ClientMoved }
+export type TsWsEventConnected = { type: "connected" }
+
+export type TsWsEvent = TsWsEventConnect | TsWsEventDisconnect | TsWsEventMoved | TsWsEventConnected
 
 export const stringifyWsEvent = (wsEvent: TsWsEvent): string => JSON.stringify(wsEvent)
 
