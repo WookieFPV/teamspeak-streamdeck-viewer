@@ -16,7 +16,7 @@ export const getTsClients = async ({forceRefresh}: { forceRefresh?: boolean } = 
     queryFn: ts3Api.getClients,
     staleTime: ({state: {data = []}}) => {
         if (forceRefresh) return 0
-        if (data.find(isMainUser)) return config.idleTimeMainUserOnlineMs;
+        if (data.find(isMainUser)) return 0 //config.idleTimeMainUserOnlineMs;
         return daysToMs(1)
     },
     gcTime: daysToMs(1)
