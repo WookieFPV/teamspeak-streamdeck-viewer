@@ -3,9 +3,10 @@ import {QueryProtocol, TeamSpeak} from "ts3-nodejs-library";
 import {queryClient, queryKey} from "../queryClient";
 import {filterAndMapTs3Clients} from "./ts3ClientMapper";
 import {TsDrawClients} from "../tsDrawClients";
+import {logger} from "~/utils/logger";
 
 const tsConnect = async (vars: TsApiTs3) => {
-    console.log(`ts connect (${vars.TS3_HOST})`)
+    logger.info(`ts connect (${vars.TS3_HOST})`)
     const ts = await TeamSpeak.connect({
         host: vars.TS3_HOST,
         queryport: 10011,
@@ -15,41 +16,42 @@ const tsConnect = async (vars: TsApiTs3) => {
         nickname: vars.TS3_NICKNAME,
         password: vars.TS3_PASSWORD,
     }).catch(e => {
-        console.log("tsConnect error", e)
+        logger.info("tsConnect error", e)
         throw e
     })
 
     ts.on("error", e => {
-        console.log(`ts3 error: ${e}`)
-        queryClient.removeQueries({queryKey: queryKey.tsInstance})
+        logger.info(`ts3 error: ${e}`)
     })
     ts.on("close", async (error): Promise<void> => {
-        console.log(`disconnected ${error}`);
-        console.warn(error)
+        logger.info(`disconnected ${error}`);
+        logger.warn(error)
         queryClient.removeQueries({queryKey: queryKey.tsInstance})
     });
     ts.on("clientconnect", e => {
-        console.log(`ts3 clientconnect: ${e.client.nickname}`)
+        logger.info(`ts3 clientconnect: ${e.client.nickname}`)
         queryClient.removeQueries({queryKey: queryKey.clients})
         ts.clientList().then(rawClients => {
-            TsDrawClients(filterAndMapTs3Clients(rawClients)).catch(console.warn)
-        })
+            TsDrawClients(filterAndMapTs3Clients(rawClients)).catch(logger.warn)
+        }).catch(logger.warn)
     })
     ts.on("clientdisconnect", e => {
-        console.log(`ts3 clientdisconnect: ${e.client?.nickname}`)
+        if(!e.client) return logger.info(`ts3 clientdisconnect: without Client`)
+
+        logger.info(`ts3 clientdisconnect: ${e.client.nickname}`)
         ts.clientList().then(rawClients => {
-            TsDrawClients(filterAndMapTs3Clients(rawClients)).catch(console.warn)
-        })
+            TsDrawClients(filterAndMapTs3Clients(rawClients)).catch(logger.warn)
+        }).catch(logger.warn)
     })
     ts.on("clientmoved", e => {
-        console.log(`ts3 clientmoved: ${e.client.nickname}`)
+        logger.info(`ts3 clientmoved: ${e.client.nickname}`)
         queryClient.removeQueries({queryKey: queryKey.clients})
         ts.clientList().then(rawClients => {
-            TsDrawClients(filterAndMapTs3Clients(rawClients)).catch(console.warn)
-        })
+            TsDrawClients(filterAndMapTs3Clients(rawClients)).catch(logger.warn)
+        }).catch(logger.warn)
     })
 
-    console.log("ts Connected")
+    logger.info("ts Connected")
     return ts
 }
 

@@ -6,13 +6,14 @@ import {isMainUser} from "../tsHelper";
 import {daysToMs} from "~/utils/dateHelpers";
 import {filterAndMapTs3Clients} from "./ts3ClientMapper";
 import {getTsInstance} from "./getTsInstance";
+import {logger} from "~/utils/logger";
 
 
 export class TsBackendTsApi implements TsBackend {
     vars: TsApiTs3
 
     constructor(vars: TsApiTs3) {
-        console.log("BACKEND_TYPE: TS3")
+        logger.info("BACKEND_TYPE: TS3")
         this.vars = vars
     }
 
@@ -20,10 +21,10 @@ export class TsBackendTsApi implements TsBackend {
         const ts = await getTsInstance(this.vars);
         return queryClient.fetchQuery<TeamSpeakClient[]>({
             queryKey: queryKey.clients, queryFn: async () => {
-                console.log("TS3 API clientList:")
+                logger.info("TS3 API clientList:")
                 const rawClients = await ts.clientList()
                 const clients = filterAndMapTs3Clients(rawClients)
-                console.log(JSON.stringify(clients.map(c => c.clientNickname)))
+                logger.info(JSON.stringify(clients.map(c => c.clientNickname)))
                 return clients
             },
             staleTime: ({state: {data = []}}) => {
@@ -31,7 +32,7 @@ export class TsBackendTsApi implements TsBackend {
                 if (data.find(isMainUser)) return 0
                 return daysToMs(1)
             },
-            gcTime: daysToMs(1)
+            gcTime: daysToMs(1),
         })
 
     }

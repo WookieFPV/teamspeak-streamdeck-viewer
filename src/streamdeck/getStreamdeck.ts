@@ -1,5 +1,6 @@
-import {queryClient, queryKey} from "../teamspeak/queryClient";
+import {queryClient, queryKey} from "~/teamspeak/queryClient";
 import {listStreamDecks, openStreamDeck} from "@elgato-stream-deck/node";
+import {logger} from "~/utils/logger";
 
 export const getStreamdeck = () => queryClient.fetchQuery({
     queryKey: queryKey.streamDeck,
@@ -14,7 +15,7 @@ const streamDeckConnect = async () => {
     const streamDeck = await openStreamDeck(deck.path)
 
     streamDeck.on('error', (error: unknown) => {
-        console.error(error)
+        logger.error(error)
         queryClient.removeQueries({queryKey: queryKey.streamDeck})
     })
     return streamDeck

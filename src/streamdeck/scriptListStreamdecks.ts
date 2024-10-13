@@ -1,14 +1,15 @@
 import {listStreamDecks} from "@elgato-stream-deck/node";
+import {logger} from "~/utils/logger";
 /*
-console.log('RAW HID')
+logger.info('RAW HID')
 for (const dev of HID.devices()) {
-  console.log(dev)
+  logger.info(dev)
 }*/
 
-console.log('StreamDecks:')
+logger.info('StreamDecks:')
 
 listStreamDecks().then((devs) => {
     for (const dev of devs) {
-        console.log(dev)
+        logger.info(dev)
     }
 })

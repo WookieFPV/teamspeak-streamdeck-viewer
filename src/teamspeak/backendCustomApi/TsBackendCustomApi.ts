@@ -6,6 +6,7 @@ import WebSocket from "ws";
 import {TsWsEvent} from "./WsEvent";
 import {TsDrawClients} from "../tsDrawClients";
 import {getClientsQuery} from "./tsCustomApi";
+import {logger} from "~/utils/logger";
 
 export class TsBackendCustomApi implements TsBackend {
     vars: TsApiCustom
@@ -14,7 +15,7 @@ export class TsBackendCustomApi implements TsBackend {
     socket
 
     constructor(vars: TsApiCustom) {
-        console.log("BACKEND_TYPE: Custom")
+        logger.info("BACKEND_TYPE: Custom")
         this.vars = vars
         this.wretch = wretch(vars.BACKEND_URL)
             .auth(`Bearer ${vars.BACKEND_TOKEN}`)
@@ -23,36 +24,36 @@ export class TsBackendCustomApi implements TsBackend {
         this.socket = new WebSocket(vars.BACKEND_WS_URL, {headers: {Authorization: `Bearer ${vars.BACKEND_TOKEN}`}});
 
         this.socket.onopen = () => {
-            console.log("[WS] Connected");
+            logger.info("[WS] Connected");
         };
 
         this.socket.onerror = (error) => {
-            console.log("onerror")
-            console.log(error)
+            logger.info("onerror")
+            logger.warn(error)
         }
         this.socket.onmessage = (_event) => {
-            if (typeof _event.data !== "string") return console.log(`Invalid ws event (must be obj) not ${_event.data}`)
+            if (typeof _event.data !== "string") return logger.info(`Invalid ws event (must be obj) not ${_event.data}`)
 
             const event = JSON.parse(_event.data) as TsWsEvent
             switch (event.type) {
                 case "clientConnect":
-                    console.log(`client connect: ${event.e.client.clientNickname}`)
-                    this.getClients({forceRefresh: true}).then((clients) => TsDrawClients(clients)).catch(console.warn)
+                    logger.info(`client connect: ${event.e.client.clientNickname}`)
+                    this.getClients({forceRefresh: true}).then((clients) => TsDrawClients(clients)).catch(logger.warn)
                     break
                 case "clientDisconnect":
-                    console.log(`client disconnect: ${event.e.client?.clientNickname}`)
-                    this.getClients({forceRefresh: true}).then((clients) => TsDrawClients(clients)).catch(console.warn)
+                    logger.info(`client disconnect: ${event.e.client?.clientNickname}`)
+                    this.getClients({forceRefresh: true}).then((clients) => TsDrawClients(clients)).catch(logger.warn)
 
                     break
                 case "clientMoved":
-                    console.log(`client moved: ${event.e.client?.clientNickname} [${event.e.channel.channelName}]`)
-                    this.getClients({forceRefresh: true}).then((clients) => TsDrawClients(clients)).catch(console.warn)
+                    logger.info(`client moved: ${event.e.client?.clientNickname} [${event.e.channel.channelName}]`)
+                    this.getClients({forceRefresh: true}).then((clients) => TsDrawClients(clients)).catch(logger.warn)
                     break
                 case "connected":
-                    console.log(`connected`)
+                    logger.info(`connected`)
                     break
                 default:
-                    console.log(`unknown event: ${event} ${JSON.stringify(event)}`)
+                    logger.info(`unknown event: ${event} ${JSON.stringify(event)}`)
             }
         }
     }

@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 import {z} from "zod";
+import {logger} from "~/utils/logger";
 // dotenv is loaded when used because esbuild is super optimizing imports...
 dotenv.config()
 
@@ -32,11 +33,11 @@ const tsApiCustom = z.object({
 export type TsApiCustom = z.infer<typeof tsApiCustom>
 
 const envSchema = tsApiTs3.or(tsApiCustom).catch(e => {
-    console.log("❌ invalid env vars:")
-    console.log(e.error.message)
+    logger.info("❌ invalid env vars:")
+    logger.warn(e.error.message)
     throw e
 })
 
 
 export const envVars = envSchema.parse(process.env);
-console.log(`✅ loaded env vars BACKEND_TYPE: ${envVars.BACKEND_TYPE}`)
+logger.info(`✅ loaded env vars BACKEND_TYPE: ${envVars.BACKEND_TYPE}`)

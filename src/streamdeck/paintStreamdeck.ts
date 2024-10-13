@@ -1,14 +1,16 @@
 import {StreamDeck} from "@elgato-stream-deck/node";
 import sharp from "sharp";
 import path from "path";
-import {getName} from "../teamspeak/tsHelper";
-import {envVars} from "../envVars";
-import {TeamSpeakClient} from "../teamspeak/teamspeakTypes";
+import {getName} from "~/teamspeak/tsHelper";
+import {envVars} from "~/envVars";
+import {TeamSpeakClient} from "~/teamspeak/teamspeakTypes";
 import {clientStateToColor, Colors} from "./colors";
+import {logger} from "~/utils/logger";
+import {config} from "~/config";
 
 
 export const streamDeckPaintTs = async (streamDeck: StreamDeck, client: TeamSpeakClient, i: number, idleTime: number) => {
-    const afkText = idleTime >= 5 ? idleTime + "m" : "";
+    const afkText = (idleTime >= config.minIdleTimeMins) ? `${idleTime}m` : "";
     return streamDeckPaint(streamDeck, i, getName(client), clientStateToColor(client), afkText)
 }
 
@@ -24,7 +26,7 @@ const fontSettings = {
     },
 }
 
-export const streamDeckPaint = async (streamDeck: StreamDeck, index: number, name: string, color: Colors, subText = "") => {
+export const streamDeckPaint = async (streamDeck: StreamDeck, index: number, name: string, color: Colors, subText: string) => {
     try {
         const finalBuffer = await sharp(path.resolve(__dirname, `../assets/${color}.png`))
             .composite([
@@ -61,7 +63,7 @@ export const streamDeckPaint = async (streamDeck: StreamDeck, index: number, nam
             .toBuffer()
         await streamDeck.fillKeyBuffer(index, finalBuffer, {format: 'rgba'})
     } catch (error) {
-        console.error(error)
+        logger.error(error)
     }
 }
 export const drawClock = async (streamDeck: StreamDeck) => {
@@ -74,7 +76,7 @@ export const drawClock = async (streamDeck: StreamDeck) => {
         await renderChar(streamDeck, ":", 1)
         await renderChar(streamDeck, mins, 2)
     } catch (error) {
-        console.error(error)
+        logger.error(error)
     }
 
 }

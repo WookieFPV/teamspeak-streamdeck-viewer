@@ -41,6 +41,7 @@ export type TeamSpeakClient = {
     connectionClientIp: string
     // clientBadges: string
     //clientIconId?: string
+    clientLastActiveTime: number
 }
 
 export type TeamSpeakChannel = {

@@ -3,16 +3,18 @@ import {TeamSpeakClient} from "../teamspeakTypes";
 import {queryClient, queryKey} from "../queryClient";
 import {isMainUser} from "../tsHelper";
 import {daysToMs, hoursToMs, minsToMs} from "~/utils/dateHelpers";
+import {logger} from "~/utils/logger";
+import {addLastActiveTime} from "~/teamspeak/addLastActiveTime";
 
 export const getClientsQuery = ({forceRefresh}: {
     forceRefresh?: boolean
 }, wretch: Wretch) => queryClient.fetchQuery<TeamSpeakClient[]>({
     queryKey: queryKey.clients,
-    queryFn: async () => {
-        console.log("TS3 API clientList:")
+    queryFn: async (): Promise<TeamSpeakClient[]> => {
+        logger.info("TS3 API clientList:")
         const clients = await wretch.get("/ts/users").json<TeamSpeakClient[]>()
-        console.log(JSON.stringify(clients.map(c => c.clientNickname)))
-        return clients
+        logger.info(JSON.stringify(clients.map(c => c.clientNickname)))
+        return addLastActiveTime(clients, Date.now())
     },
     staleTime: ({state: {data = []}}) => {
         if (forceRefresh) return 0
