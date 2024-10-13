@@ -10,8 +10,8 @@ export const colors = {
 
 export type Colors = keyof typeof colors
 
-export const clientStateToColor = (client: TeamSpeakClient): Colors => {
-    if (client.clientFlagTalking) {
+export const clientStateToColor = (client: TeamSpeakClient, mainUser?: TeamSpeakClient): Colors => {
+    if (client.clientFlagTalking && mainUser?.cid === client.cid) {
         return "light_blue"
     } else if (client.clientInputMuted && !client.clientOutputMuted) {
         return "orange"

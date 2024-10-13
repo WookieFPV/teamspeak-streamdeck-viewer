@@ -7,7 +7,7 @@ export interface TsBackend {
     getClients({forceRefresh}: { forceRefresh?: boolean }): Promise<TeamSpeakClient[]>;
 }
 
-class TsBackendFactory {
+export class TsBackendFactory {
     static getBackend(vars: typeof envVars): TsBackend {
         switch (vars.BACKEND_TYPE) {
             case "customApi":
@@ -20,4 +20,4 @@ class TsBackendFactory {
     }
 }
 
-export const TsBackend = TsBackendFactory.getBackend(envVars)
+

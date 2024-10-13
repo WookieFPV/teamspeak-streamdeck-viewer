@@ -17,7 +17,7 @@ export const TsDrawClients = async (clientsRaw: TeamSpeakClient[]): Promise<void
         const idleTimeMins = Math.floor(clientIdleTime / 1000 / 60)
 
         //staticData.clientOnDeck[i] = client
-        await streamDeckPaintTs(streamDeck, client, i, idleTimeMins)
+        await streamDeckPaintTs(streamDeck, client, i, idleTimeMins, mainUser)
     }
 
     if (clients.length !== 0) {

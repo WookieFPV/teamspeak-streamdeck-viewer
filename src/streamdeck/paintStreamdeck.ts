@@ -9,9 +9,9 @@ import {logger} from "~/utils/logger";
 import {config} from "~/config";
 
 
-export const streamDeckPaintTs = async (streamDeck: StreamDeck, client: TeamSpeakClient, i: number, idleTime: number) => {
+export const streamDeckPaintTs = async (streamDeck: StreamDeck, client: TeamSpeakClient, i: number, idleTime: number, mainUser?: TeamSpeakClient) => {
     const afkText = (idleTime >= config.minIdleTimeMins) ? `${idleTime}m` : "";
-    return streamDeckPaint(streamDeck, i, getName(client), clientStateToColor(client), afkText)
+    return streamDeckPaint(streamDeck, i, getName(client), clientStateToColor(client, mainUser), afkText)
 }
 
 
