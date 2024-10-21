@@ -1,33 +1,33 @@
-import {wait, waitForNetwork} from "~/utils/helper";
-import {TsDrawClients} from "~/teamspeak/tsDrawClients";
-import {getPollingDelay} from "~/teamspeak/tsHelper";
-import {config} from "~/config";
-import {getStreamdeck} from "~/streamdeck/getStreamdeck";
-import {TsBackendFactory} from "~/teamspeak/BackendFactory";
-import {logger} from "~/utils/logger";
-import {envVars} from "~/envVars";
+import { config } from "~/config";
+import { envVars } from "~/envVars";
+import { getStreamdeck } from "~/streamdeck/getStreamdeck";
+import { getTsBackend } from "~/teamspeak/BackendFactory";
+import { TsDrawClients } from "~/teamspeak/tsDrawClients";
+import { getPollingDelay } from "~/teamspeak/tsHelper";
+import { wait, waitForNetwork } from "~/utils/helper";
+import { logger } from "~/utils/logger";
 
 const runTsViewer = async () => {
-    logger.info("run runTsViewer")
-    await getStreamdeck()
-    await waitForNetwork()
+	logger.info("run runTsViewer");
+	await getStreamdeck();
+	await waitForNetwork();
 
-    const TsBackend = TsBackendFactory.getBackend(envVars)
+	const TsBackend = getTsBackend(envVars);
 
-    while (true) {
-        try {
-            logger.info("TsBackend.getClients()")
-            const clients = await TsBackend.getClients({})
-            await TsDrawClients(clients)
-            await wait(getPollingDelay(clients))
-        } catch (err) {
-            logger.warn(err)
-            await wait(config.idleTimeError)
-        }
-    }
-}
+	while (true) {
+		try {
+			logger.info("TsBackend.getClients()");
+			const clients = await TsBackend.getClients({});
+			await TsDrawClients(clients);
+			await wait(getPollingDelay(clients));
+		} catch (err) {
+			logger.warn(err);
+			await wait(config.idleTimeError);
+		}
+	}
+};
 
-runTsViewer()
+runTsViewer();
 
 /*
 export const staticData = {

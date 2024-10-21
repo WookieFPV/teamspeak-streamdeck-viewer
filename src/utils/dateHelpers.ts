@@ -1,7 +1,7 @@
 /**
  * Each Second has 1000  ms
  */
-const MsPerS = 1000
+const MsPerS = 1000;
 
 /**
  * Each Minute has 1000 * 60 ms
