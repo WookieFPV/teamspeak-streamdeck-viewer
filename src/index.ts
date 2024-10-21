@@ -8,23 +8,24 @@ import { wait, waitForNetwork } from "~/utils/helper";
 import { logger } from "~/utils/logger";
 
 const runTsViewer = async () => {
-	logger.info("run runTsViewer");
-	await getStreamdeck();
-	await waitForNetwork();
+  logger.info("run runTsViewer");
+  await getStreamdeck();
+  await waitForNetwork();
 
-	const TsBackend = getTsBackend(envVars);
+  const TsBackend = getTsBackend(envVars);
 
-	while (true) {
-		try {
-			logger.info("TsBackend.getClients()");
-			const clients = await TsBackend.getClients({});
-			await TsDrawClients(clients);
-			await wait(getPollingDelay(clients));
-		} catch (err) {
-			logger.warn(err);
-			await wait(config.idleTimeError);
-		}
-	}
+  while (true) {
+    try {
+      logger.debug("TsBackend.getClients()");
+      const clients = await TsBackend.getClients({});
+      await TsDrawClients(clients);
+      await wait(getPollingDelay(clients));
+    } catch (err) {
+      logger.info("err in main loop");
+      logger.warn(err);
+      await wait(config.idleTimeError);
+    }
+  }
 };
 
 runTsViewer();

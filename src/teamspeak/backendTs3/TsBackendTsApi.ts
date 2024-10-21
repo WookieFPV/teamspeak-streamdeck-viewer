@@ -9,32 +9,32 @@ import { getTsInstance } from "./getTsInstance";
 import { filterAndMapTs3Clients } from "./ts3ClientMapper";
 
 export class TsBackendTsApi implements TsBackend {
-	vars: TsApiTs3;
+  vars: TsApiTs3;
 
-	constructor(vars: TsApiTs3) {
-		logger.info("BACKEND_TYPE: TS3");
-		this.vars = vars;
-	}
+  constructor(vars: TsApiTs3) {
+    logger.info("BACKEND_TYPE: TS3");
+    this.vars = vars;
+  }
 
-	async getClients({
-		forceRefresh,
-	}: { forceRefresh?: boolean } = {}): Promise<TeamSpeakClient[]> {
-		const ts = await getTsInstance(this.vars);
-		return queryClient.fetchQuery<TeamSpeakClient[]>({
-			queryKey: queryKey.clients,
-			queryFn: async () => {
-				logger.info("TS3 API clientList:");
-				const rawClients = await ts.clientList();
-				const clients = filterAndMapTs3Clients(rawClients);
-				logger.info(JSON.stringify(clients.map((c) => c.clientNickname)));
-				return clients;
-			},
-			staleTime: ({ state: { data = [] } }) => {
-				if (forceRefresh) return 0;
-				if (data.find(isMainUser)) return 0;
-				return daysToMs(1);
-			},
-			gcTime: daysToMs(1),
-		});
-	}
+  async getClients({
+    forceRefresh,
+  }: { forceRefresh?: boolean } = {}): Promise<TeamSpeakClient[]> {
+    const ts = await getTsInstance(this.vars);
+    return queryClient.fetchQuery<TeamSpeakClient[]>({
+      queryKey: queryKey.clients,
+      queryFn: async () => {
+        logger.info("TS3 API clientList:");
+        const rawClients = await ts.clientList();
+        const clients = filterAndMapTs3Clients(rawClients);
+        logger.info(JSON.stringify(clients.map((c) => c.clientNickname)));
+        return clients;
+      },
+      staleTime: ({ state: { data = [] } }) => {
+        if (forceRefresh) return 0;
+        if (data.find(isMainUser)) return 0;
+        return daysToMs(1);
+      },
+      gcTime: daysToMs(1),
+    });
+  }
 }

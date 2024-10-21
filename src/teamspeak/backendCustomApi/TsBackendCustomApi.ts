@@ -11,124 +11,130 @@ import type { TsWsEvent } from "./WsEvent";
 import { getClientsQuery } from "./tsCustomApi";
 
 export class TsBackendCustomApi implements TsBackend {
-	private readonly vars: TsApiCustom;
-	private readonly wretch: Wretch;
-	private socket: WebSocket;
+  private readonly vars: TsApiCustom;
+  private readonly wretch: Wretch;
+  private socket: WebSocket | undefined;
 
-	constructor(vars: TsApiCustom) {
-		logger.info("BACKEND_TYPE: Custom");
-		this.vars = vars;
-		this.wretch = wretch(vars.BACKEND_URL)
-			.auth(`Bearer ${vars.BACKEND_TOKEN}`)
-			.options({ credentials: "include", mode: "cors" });
+  constructor(vars: TsApiCustom) {
+    logger.info("BACKEND_TYPE: Custom");
+    this.vars = vars;
+    this.wretch = wretch(vars.BACKEND_URL)
+      .auth(`Bearer ${vars.BACKEND_TOKEN}`)
+      .options({ credentials: "include", mode: "cors" });
 
-		this.socket = this.initWS();
-		this.socket.onopen = () => {
-			logger.info("[WS] Connected");
-		};
+    this.socket = this.initWS();
+  }
 
-		this.socket.onerror = (error) => {
-			logger.info("onerror");
-			logger.warn(error);
-			this.socket.close();
+  initWS() {
+    logger.info("[WS] initWS");
+    const socket = new WebSocket(this.vars.BACKEND_WS_URL, {
+      headers: { Authorization: `Bearer ${this.vars.BACKEND_TOKEN}` },
+    });
+    socket.onopen = () => {
+      logger.info("[WS] onopen");
+    };
 
-			wait(1000).then(() => {
-				logger.info("reconnect...");
-				this.socket = this.initWS();
-			});
-		};
-		this.socket.onmessage = (_event) => {
-			if (typeof _event.data !== "string")
-				return logger.info(`Invalid ws event (must be obj) not ${_event.data}`);
-			this.handleSocketMessage(_event);
-		};
-	}
-	initWS() {
-		return new WebSocket(this.vars.BACKEND_WS_URL, {
-			headers: { Authorization: `Bearer ${this.vars.BACKEND_TOKEN}` },
-		});
-	}
+    socket.onerror = (error) => {
+      logger.info("[WS] onerror");
+      logger.warn(error);
+    };
+    socket.onclose = async (_event) => {
+      logger.info("[WS] onclose... reconnect in 5s");
+      socket.terminate();
+      await wait(10000);
+      logger.info("[WS] reconnect...");
+      try {
+        this.socket = this.initWS();
+        logger.info(`[WS] readyState B: ${this.socket.readyState}`);
+      } catch (e) {
+        logger.info(`[WS] readyState C: ${this.socket?.readyState}`);
+      }
+    };
+    socket.onmessage = (_event) => {
+      if (typeof _event.data !== "string")
+        return logger.info(
+          `Invalid ws event (must be string) not ${typeof _event.data} -> "${_event.data}"`,
+        );
+      this.handleSocketMessage(_event.data);
+    };
+    return socket;
+  }
 
-	private handleSocketMessage(data: unknown) {
-		if (typeof data !== "string") {
-			return logger.info(
-				`Invalid ws event (must be string) not ${typeof data}`,
-			);
-		}
+  private handleSocketMessage(data: string) {
+    logger.info("[WS] ws msg:", data);
+    try {
+      const wsEvent = JSON.parse(data) as TsWsEvent;
+      this.processWebSocketEvent(wsEvent);
+    } catch (error) {
+      logger.warn("Error parsing WebSocket message:", error);
+    }
+  }
 
-		try {
-			const wsEvent = JSON.parse(data) as TsWsEvent;
-			this.processWebSocketEvent(wsEvent);
-		} catch (error) {
-			logger.warn("Error parsing WebSocket message:", error);
-		}
-	}
+  private processWebSocketEvent(event: TsWsEvent) {
+    switch (event.type) {
+      case "clientConnect":
+        this.handleClientConnect(event.e.client);
+        break;
+      case "clientDisconnect":
+        this.handleClientDisconnect(event.e.client);
+        break;
+      case "clientMoved":
+        this.handleClientMoved(event.e.client, event.e.channel);
+        break;
+      case "connected":
+        logger.info("[WS] WebSocket connected msg");
+        break;
+      default:
+        logger.info(`Unknown event: ${JSON.stringify(event)}`);
+    }
+  }
 
-	private processWebSocketEvent(event: TsWsEvent) {
-		switch (event.type) {
-			case "clientConnect":
-				this.handleClientConnect(event.e.client);
-				break;
-			case "clientDisconnect":
-				this.handleClientDisconnect(event.e.client);
-				break;
-			case "clientMoved":
-				this.handleClientMoved(event.e.client, event.e.channel);
-				break;
-			case "connected":
-				logger.info("WebSocket connected");
-				break;
-			default:
-				logger.info(`Unknown event: ${JSON.stringify(event)}`);
-		}
-	}
+  private handleClientConnect(client: TeamSpeakClient | undefined) {
+    if (!client) return;
+    logger.info(`[WS]: Client connect: ${client.clientNickname}`);
+    this.updateClientList((oldData) => [...(oldData || []), client]);
+    this.refreshAndDrawClients();
+  }
 
-	private handleClientConnect(client: TeamSpeakClient | undefined) {
-		if (!client) return;
-		logger.info(`Client connect: ${client.clientNickname}`);
-		this.updateClientList((oldData) => [...(oldData || []), client]);
-		this.refreshAndDrawClients();
-	}
+  private handleClientDisconnect(client: TeamSpeakClient | undefined) {
+    if (!client) return;
+    logger.info(`[WS]: Client disconnect: ${client.clientNickname}`);
+    this.updateClientList((oldData) =>
+      (oldData || []).filter(
+        (c) => c.clientUniqueIdentifier !== client.clientUniqueIdentifier,
+      ),
+    );
+    this.refreshAndDrawClients();
+  }
 
-	private handleClientDisconnect(client: TeamSpeakClient | undefined) {
-		if (!client) return;
-		logger.info(`Client disconnect: ${client.clientNickname}`);
-		this.updateClientList((oldData) =>
-			(oldData || []).filter(
-				(c) => c.clientUniqueIdentifier !== client.clientUniqueIdentifier,
-			),
-		);
-		this.refreshAndDrawClients();
-	}
+  private handleClientMoved(
+    client: TeamSpeakClient,
+    channel: { channelName: string },
+  ) {
+    logger.info(
+      `[WS]: Client moved: ${client.clientNickname} [${channel.channelName}]`,
+    );
+    this.refreshAndDrawClients();
+  }
 
-	private handleClientMoved(
-		client: TeamSpeakClient,
-		channel: { channelName: string },
-	) {
-		logger.info(
-			`Client moved: ${client.clientNickname} [${channel.channelName}]`,
-		);
-		this.refreshAndDrawClients();
-	}
+  private updateClientList(
+    updater: (oldData: TeamSpeakClient[] | undefined) => TeamSpeakClient[],
+  ) {
+    queryClient.setQueryData<TeamSpeakClient[]>(queryKey.clients, updater);
+  }
 
-	private updateClientList(
-		updater: (oldData: TeamSpeakClient[] | undefined) => TeamSpeakClient[],
-	) {
-		queryClient.setQueryData<TeamSpeakClient[]>(queryKey.clients, updater);
-	}
+  private async refreshAndDrawClients() {
+    try {
+      const clients = await this.getClients({ forceRefresh: true });
+      await TsDrawClients(clients);
+    } catch (error) {
+      logger.warn("Error refreshing clients:", error);
+    }
+  }
 
-	private async refreshAndDrawClients() {
-		try {
-			const clients = await this.getClients({ forceRefresh: true });
-			await TsDrawClients(clients);
-		} catch (error) {
-			logger.warn("Error refreshing clients:", error);
-		}
-	}
-
-	async getClients(args: { forceRefresh?: boolean }): Promise<
-		TeamSpeakClient[]
-	> {
-		return getClientsQuery(args, this.wretch);
-	}
+  async getClients(args: { forceRefresh?: boolean }): Promise<
+    TeamSpeakClient[]
+  > {
+    return getClientsQuery(args, this.wretch);
+  }
 }

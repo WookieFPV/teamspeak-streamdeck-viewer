@@ -9,7 +9,7 @@ for (const dev of HID.devices()) {
 logger.info("StreamDecks:");
 
 listStreamDecks().then((devs) => {
-	for (const dev of devs) {
-		logger.info(dev);
-	}
+  for (const dev of devs) {
+    logger.info(dev);
+  }
 });
