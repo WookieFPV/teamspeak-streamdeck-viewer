@@ -5,7 +5,7 @@ import { wait } from "~/utils/helper";
 import { logger } from "~/utils/logger";
 import type { TsBackend } from "../BackendFactory";
 import { queryClient, queryKey } from "../queryClient";
-import type { TeamSpeakClient } from "../teamspeakTypes";
+import { type TeamSpeakClient, clientType } from "../teamspeakTypes";
 import { TsDrawClients } from "../tsDrawClients";
 import type { TsWsEvent } from "./WsEvent";
 import { getClientsQuery } from "./tsCustomApi";
@@ -26,6 +26,10 @@ export class TsBackendCustomApi implements TsBackend {
   }
 
   initWS() {
+    if (this.socket) {
+      logger.info("[WS] initWS but before close already existing socket");
+      this.socket.terminate();
+    }
     logger.info("[WS] initWS");
     const socket = new WebSocket(this.vars.BACKEND_WS_URL, {
       headers: { Authorization: `Bearer ${this.vars.BACKEND_TOKEN}` },
@@ -90,14 +94,14 @@ export class TsBackendCustomApi implements TsBackend {
   }
 
   private handleClientConnect(client: TeamSpeakClient | undefined) {
-    if (!client) return;
+    if (!client || client.clientType !== clientType.normalUser) return;
     logger.info(`[WS]: Client connect: ${client.clientNickname}`);
     this.updateClientList((oldData) => [...(oldData || []), client]);
     this.refreshAndDrawClients();
   }
 
   private handleClientDisconnect(client: TeamSpeakClient | undefined) {
-    if (!client) return;
+    if (!client || client.clientType !== clientType.normalUser) return;
     logger.info(`[WS]: Client disconnect: ${client.clientNickname}`);
     this.updateClientList((oldData) =>
       (oldData || []).filter(

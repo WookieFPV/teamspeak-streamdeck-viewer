@@ -1,3 +1,8 @@
+export const clientType = {
+  normalUser: 0,
+  queryUser: 1,
+};
+
 export type TeamSpeakClient = {
   // nickname, idleTime, uniqueIdentifier, flagTalking, clientAwayMessage, clientEstimatedLocation, clientBadges
   // clientAwayMessage, clientEstimatedLocation, clientBadges
