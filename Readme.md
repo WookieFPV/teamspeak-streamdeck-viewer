@@ -7,8 +7,23 @@ Additionally, when connected, it provides a real-time display of all clients con
 
 ## Getting Started
 
-1. Create a `.env` file by copying the provided example: `cp .env.example .env`.
-2. Fill in the server query credentials in the newly created `.env` file.
+Requires Node.js >= 18.12 and [pnpm](https://pnpm.io) 10 (`corepack enable pnpm`, the version is
+pinned via the `packageManager` field).
+
+1. Install the dependencies: `pnpm install`.
+2. Create a `.env` file by copying the provided example: `cp .env.example .env`.
+3. Fill in the server query credentials in the newly created `.env` file.
+4. Start it in watch mode: `pnpm start`.
+
+### Scripts
+
+| command            | what it does                                          |
+|--------------------|-------------------------------------------------------|
+| `pnpm start`       | build in watch mode + restart on change (development) |
+| `pnpm build`       | bundle to `dist/index.js` (target: node 18)           |
+| `pnpm start-prod`  | run the built bundle: `node dist/index.js`            |
+| `pnpm check`       | biome lint + format, with autofix                     |
+| `pnpm typecheck`   | `tsc --noEmit`                                        |
 
 ## Key Features
 
@@ -28,6 +43,15 @@ Additionally, when connected, it provides a real-time display of all clients con
    3. add `SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0090", MODE="0664", GROUP="plugdev"` (you might adapt the idProduct based of the output from `lsusb`)
    4. reload rules `sudo udevadm trigger`
 2. default font might not be available (replace with font on system or install font)
+3. the Pi Zero is an armv6 board, so Node comes from the
+   [unofficial builds](https://unofficial-builds.nodejs.org/download/release/) — keep it at 18 or
+   newer, that is what `dist/index.js` is built for
+4. build on a faster machine and copy `dist/` + `assets/` + `.env` over if `pnpm build` is too slow
+   on the Pi
+
+The `ssh2` / `cpu-features` build scripts are intentionally not approved (see `onlyBuiltDependencies`
+in `package.json`): they are optional native speedups for the Teamspeak query connection that would
+need a full node-gyp toolchain on the Pi, and the pure JS fallback works fine.
 
 ## Roadmap
 

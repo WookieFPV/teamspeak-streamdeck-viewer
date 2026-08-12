@@ -1,6 +1,13 @@
-/node_modules/
-**/*.js
+node_modules/
+dist/
 
-dist/**
-.idea/
+# local config
 .env
+
+# editors / os
+.idea/
+.vscode/
+.DS_Store
+
+# logs
+*.log
