@@ -4,6 +4,9 @@ dist/
 # local config
 .env
 
+# device/deployment notes, not for a public repo
+CLAUDE.local.md
+
 # editors / os
 .idea/
 .vscode/
