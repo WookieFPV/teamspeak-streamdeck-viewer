@@ -6,4 +6,9 @@ export const config = {
   idleTimeError: 10 * 1000,
 
   minIdleTimeMins: 5, // time when user is shown as idle/afk
+
+  // the clock occupies the last row of keys (hours, ":", minutes)
+  clockKeyCount: 3,
+  // only show the clock while at most this many clients are on the deck
+  maxClientsWithClock: 3,
 };

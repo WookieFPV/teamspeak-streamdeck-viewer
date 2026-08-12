@@ -84,15 +84,15 @@ export const streamDeckPaint = async (
     logger.error(error);
   }
 };
-export const drawClock = async (streamDeck: StreamDeck) => {
+export const drawClock = async (streamDeck: StreamDeck, startIndex = 0) => {
   try {
     const date = new Date();
     const hours = date.getHours().toString().padStart(2, "0");
     const mins = date.getMinutes().toString().padStart(2, "0");
 
-    await renderChar(streamDeck, hours, 0);
-    await renderChar(streamDeck, ":", 1);
-    await renderChar(streamDeck, mins, 2);
+    await renderChar(streamDeck, hours, startIndex);
+    await renderChar(streamDeck, ":", startIndex + 1);
+    await renderChar(streamDeck, mins, startIndex + 2);
   } catch (error) {
     logger.error(error);
   }

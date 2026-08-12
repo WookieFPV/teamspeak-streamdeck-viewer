@@ -1,3 +1,4 @@
+import { config } from "~/config";
 import { getStreamdeck } from "~/streamdeck/getStreamdeck";
 import { drawClock, streamDeckPaintTs } from "~/streamdeck/paintStreamdeck";
 import type { TeamSpeakClient } from "./teamspeakTypes";
@@ -12,9 +13,16 @@ export const TsDrawClients = async (
     (c) => !mainUser || c.cid === mainUser?.cid,
   );
 
+  // the clock lives on the last row of keys, but only while enough keys are free
+  const showClock =
+    clients.length <= config.maxClientsWithClock &&
+    streamDeck.NUM_KEYS - config.clockKeyCount >= clients.length;
+  const clockStart = streamDeck.NUM_KEYS - config.clockKeyCount;
+  const clientKeys = showClock ? clockStart : streamDeck.NUM_KEYS;
+
   for (const client of clients) {
     const i = clients.indexOf(client);
-    if (i >= streamDeck.NUM_KEYS) continue;
+    if (i >= clientKeys) continue;
 
     const clientIdleTime = Date.now() - client.clientLastActiveTime;
 
@@ -24,11 +32,11 @@ export const TsDrawClients = async (
     await streamDeckPaintTs(streamDeck, client, i, idleTimeMins, mainUser);
   }
 
-  if (clients.length !== 0) {
-    for (let i = clients.length; i < streamDeck.NUM_KEYS; i++) {
-      await streamDeck.clearKey(i);
-    }
-  } else {
-    await drawClock(streamDeck);
+  for (let i = clients.length; i < clientKeys; i++) {
+    await streamDeck.clearKey(i);
+  }
+
+  if (showClock) {
+    await drawClock(streamDeck, clockStart);
   }
 };
