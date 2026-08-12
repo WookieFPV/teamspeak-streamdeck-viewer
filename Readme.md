@@ -7,14 +7,8 @@ Additionally, when connected, it provides a real-time display of all clients con
 
 ## Getting Started
 
-This project runs on [Bun](https://bun.sh) (`curl -fsSL https://bun.sh/install | bash`).
-
-1. Install dependencies: `bun install`.
-2. Create a `.env` file by copying the provided example: `cp .env.example .env`.
-3. Fill in the server query credentials in the newly created `.env` file (loaded automatically by Bun).
-4. Start it: `bun start` (or `bun dev` to restart on file changes).
-
-There is no build step — Bun runs the TypeScript sources directly.
+1. Create a `.env` file by copying the provided example: `cp .env.example .env`.
+2. Fill in the server query credentials in the newly created `.env` file.
 
 ## Key Features
 
