@@ -25,6 +25,8 @@ export const streamDeckPaintTs = async (
   );
 };
 
+const assetsDir = path.resolve(import.meta.dir, "../../assets");
+
 const fontSettings = {
   user: {
     family: envVars.STREAMDECK_FONT ?? "sans-serif",
@@ -44,9 +46,7 @@ export const streamDeckPaint = async (
   subText: string,
 ) => {
   try {
-    const finalBuffer = await sharp(
-      path.resolve(__dirname, `../assets/${color}.png`),
-    )
+    const finalBuffer = await sharp(path.join(assetsDir, `${color}.png`))
       .composite([
         {
           input: Buffer.from(
@@ -103,9 +103,7 @@ const renderChar = async (
   char: string,
   index: number,
 ) => {
-  const finalBuffer = await sharp(
-    path.resolve(__dirname, "../assets/black.png"),
-  )
+  const finalBuffer = await sharp(path.join(assetsDir, "black.png"))
     .composite([
       {
         input: Buffer.from(
