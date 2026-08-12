@@ -1,0 +1,26 @@
+[Unit]
+# systemd unit for the production device (raspberry pi, node 18 via nvm).
+# Install: see deploy/README.md
+Description=TeamSpeak Stream Deck viewer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/streamdeck-ts-viewer
+
+# nvm's bin dir must be on PATH; systemd does not read the user's profile.
+Environment=PATH=/home/pi/.nvm/versions/node/v18.19.0/bin:/usr/local/bin:/usr/bin:/bin
+
+# node is started directly rather than through `pnpm start-prod`: the pnpm wrapper would stay alive
+# as the parent and costs ~95MB RSS on a 427MB device.
+# The redirect keeps ~/streamdeck.log as the single runtime log, truncated on each start.
+ExecStart=/bin/sh -c 'exec node dist/index.js > /home/pi/streamdeck.log 2>&1'
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
