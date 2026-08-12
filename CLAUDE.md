@@ -54,6 +54,11 @@ the process never dies.
   - `backendCustomApi/` — `BACKEND_TYPE=customApi`, talks to a separate HTTP + websocket service
     (`BACKEND_URL` / `BACKEND_WS_URL` / `BACKEND_TOKEN`); event-driven instead of polling. Its log
     lines are prefixed `[WS]`, the ts3 backend's are `[TS]` — handy for telling them apart in a log.
+    Missing an event means showing stale clients, so the socket handling is defensive: a full
+    refresh on every (re)connect and on the server's `tsReconnected` event, a watchdog that
+    recycles the socket when the server's `heartbeat` stops arriving (half open tcp), and a
+    single-flight reconnect with backoff guarded by a generation counter so two sockets can never
+    run at once. Timings live in `config.ws`.
   - `queryClient.ts` — `@tanstack/query-core` cache shared by the backends.
   - `tsDrawClients.ts` / `tsHelper.ts` / `addLastActiveTime.ts` — turn a client list into what goes
     on the keys (ordering, idle time, polling delay).
