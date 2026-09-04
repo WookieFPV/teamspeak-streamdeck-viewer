@@ -25,9 +25,6 @@
   },
   "packageManager": "pnpm@10.34.5",
   "pnpm": {
-    "overrides": {
-      "esbuild": "^0.28.2"
-    },
     "onlyBuiltDependencies": [
       "@biomejs/biome",
       "@julusian/jpeg-turbo",
@@ -39,15 +36,15 @@
   "dependencies": {
     "@elgato-stream-deck/node": "^7.6.3",
     "@julusian/jpeg-turbo": "^3.0.1",
-    "@tanstack/query-core": "5.59.6",
+    "@tanstack/query-core": "5.102.8",
     "dotenv": "16.4.5",
     "immer": "10.1.1",
     "is-online": "^12.0.2",
-    "node-hid": "^3.1.0",
+    "node-hid": "^3.4.0",
     "p-wait-for": "^3.2.0",
     "sharp": "^0.35.4",
     "ts3-nodejs-library": "3.5.3",
-    "winston": "3.15.0",
+    "winston": "3.19.0",
     "wretch": "2.10.0",
     "ws": "^8.21.3",
     "zod": "3.23.8"
@@ -55,9 +52,9 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.3",
     "@types/node": "20.11.5",
-    "@types/ws": "8.5.12",
+    "@types/ws": "8.18.1",
     "concurrently": "9.0.1",
-    "nodemon": "^3.1.7",
+    "nodemon": "^3.1.14",
     "tsup": "^8.5.1",
     "typescript": "5.6.2"
   }
