@@ -8,6 +8,7 @@ export const TsDrawClients = async (
   clientsRaw: TeamSpeakClient[],
 ): Promise<void> => {
   const streamDeck = await getStreamdeck();
+  const numKeys = streamDeck.CONTROLS.filter((c) => c.type === "button").length;
   const mainUser = clientsRaw.find(isMainUser);
   const clients = clientsRaw.filter(
     (c) => !mainUser || c.cid === mainUser?.cid,
@@ -16,9 +17,9 @@ export const TsDrawClients = async (
   // the clock lives on the last row of keys, but only while enough keys are free
   const showClock =
     clients.length <= config.maxClientsWithClock &&
-    streamDeck.NUM_KEYS - config.clockKeyCount >= clients.length;
-  const clockStart = streamDeck.NUM_KEYS - config.clockKeyCount;
-  const clientKeys = showClock ? clockStart : streamDeck.NUM_KEYS;
+    numKeys - config.clockKeyCount >= clients.length;
+  const clockStart = numKeys - config.clockKeyCount;
+  const clientKeys = showClock ? clockStart : numKeys;
 
   for (const client of clients) {
     const i = clients.indexOf(client);

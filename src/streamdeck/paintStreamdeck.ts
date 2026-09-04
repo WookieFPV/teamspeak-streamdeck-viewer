@@ -8,6 +8,18 @@ import { getName } from "~/teamspeak/tsHelper";
 import { logger } from "~/utils/logger";
 import { type Colors, clientStateToColor } from "./colors";
 
+// elgato-stream-deck v7 removed ICON_SIZE; the per-key resolution now lives
+// on the button control definitions
+const keyPixelSize = (streamDeck: StreamDeck, index: number): number => {
+  const control = streamDeck.CONTROLS.find(
+    (c) => c.type === "button" && c.index === index,
+  );
+  if (!control || control.type !== "button" || control.feedbackType !== "lcd") {
+    throw new Error(`key ${index} does not support image fills`);
+  }
+  return control.pixelSize.width;
+};
+
 export const streamDeckPaintTs = async (
   streamDeck: StreamDeck,
   client: TeamSpeakClient,
@@ -50,7 +62,7 @@ export const streamDeckPaint = async (
       .composite([
         {
           input: Buffer.from(
-            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${streamDeck.ICON_SIZE} ${streamDeck.ICON_SIZE}">
+            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${keyPixelSize(streamDeck, index)} ${keyPixelSize(streamDeck, index)}">
               <text
                 font-family="${fontSettings.user.family}"
                 font-size="${fontSettings.user.size}"
@@ -109,7 +121,7 @@ const renderChar = async (
     .composite([
       {
         input: Buffer.from(
-          `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${streamDeck.ICON_SIZE} ${streamDeck.ICON_SIZE}">
+          `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${keyPixelSize(streamDeck, index)} ${keyPixelSize(streamDeck, index)}">
               <text
                 font-family="${fontSettings.user.family}"
                 font-size="50px"
