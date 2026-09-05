@@ -42,8 +42,8 @@ importers:
         specifier: 3.19.0
         version: 3.19.0
       wretch:
-        specifier: 2.10.0
-        version: 2.10.0
+        specifier: 2.11.1
+        version: 2.11.1
       ws:
         specifier: ^8.21.3
         version: 8.21.3
@@ -1451,8 +1451,8 @@ packages:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
     engines: {node: '>=10'}
 
-  wretch@2.10.0:
-    resolution: {integrity: sha512-umAgGsgEfWVm2GT9Gl+Uyl2AI0q1P8WqXMGiDbSf5QImZW7bdnUbTUrgXYzYH+VmtlM6RqwJQH7JNizSNwt6kw==}
+  wretch@2.11.1:
+    resolution: {integrity: sha512-rJejp30zE8Igs4Mvo4pxXaiOKdSIGYLxyVaY+jZTlAMfQyi/hZsDwMRa9R09N0iS9Q8cLvplKfHwwyBv6XRWsg==}
     engines: {node: '>=14'}
 
   ws@8.21.3:
@@ -2674,7 +2674,7 @@ snapshots:
       string-width: 4.2.3
       strip-ansi: 6.0.1
 
-  wretch@2.10.0: {}
+  wretch@2.11.1: {}
 
   ws@8.21.3: {}
 
