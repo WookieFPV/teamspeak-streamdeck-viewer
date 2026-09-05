@@ -18,8 +18,8 @@ importers:
         specifier: 5.102.8
         version: 5.102.8
       dotenv:
-        specifier: 16.4.5
-        version: 16.4.5
+        specifier: 16.6.1
+        version: 16.6.1
       immer:
         specifier: 10.1.1
         version: 10.1.1
@@ -859,8 +859,8 @@ packages:
     resolution: {integrity: sha512-BDeBd8najI4/lS00HSKpdFia+OvUMytaVjfzR9n5Lq8MlZRSvtbI+uLtx1+XmQFls5wFU9dssccTmQQ6nfpjdg==}
     engines: {node: '>=6'}
 
-  dotenv@16.4.5:
-    resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
+  dotenv@16.6.1:
+    resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
     engines: {node: '>=12'}
 
   emoji-regex@8.0.0:
@@ -2064,7 +2064,7 @@ snapshots:
     dependencies:
       dns-packet: 5.6.1
 
-  dotenv@16.4.5: {}
+  dotenv@16.6.1: {}
 
   emoji-regex@8.0.0: {}
 

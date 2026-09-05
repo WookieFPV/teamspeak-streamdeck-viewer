@@ -37,7 +37,7 @@
     "@elgato-stream-deck/node": "^7.6.3",
     "@julusian/jpeg-turbo": "^3.0.1",
     "@tanstack/query-core": "5.102.8",
-    "dotenv": "16.4.5",
+    "dotenv": "16.6.1",
     "immer": "10.1.1",
     "is-online": "^12.0.2",
     "node-hid": "^3.4.0",
