@@ -41,7 +41,7 @@
     "immer": "10.2.0",
     "is-online": "^12.0.2",
     "node-hid": "^3.4.0",
-    "p-wait-for": "^3.2.0",
+    "p-wait-for": "^6.0.0",
     "sharp": "^0.35.4",
     "ts3-nodejs-library": "3.5.3",
     "winston": "3.19.0",
