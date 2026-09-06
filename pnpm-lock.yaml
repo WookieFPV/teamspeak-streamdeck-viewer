@@ -21,8 +21,8 @@ importers:
         specifier: 17.4.2
         version: 17.4.2
       immer:
-        specifier: 10.2.0
-        version: 10.2.0
+        specifier: 11.1.18
+        version: 11.1.18
       is-online:
         specifier: ^12.0.2
         version: 12.0.2
@@ -983,8 +983,8 @@ packages:
   ignore-by-default@1.0.1:
     resolution: {integrity: sha512-Ius2VYcGNk7T90CppJqcIkS5ooHUZyIQK+ClZfMfMNFEF9VSE73Fq+906u/CWu92x4gzZMWOwfFYckPObzdEbA==}
 
-  immer@10.2.0:
-    resolution: {integrity: sha512-d/+XTN3zfODyjr89gM3mPq1WNX2B8pYsu7eORitdwyA2sBubnTl3laYlBk4sXY5FUa5qTZGBDPJICVbvqzjlbw==}
+  immer@11.1.18:
+    resolution: {integrity: sha512-EQyQtLiYW029lyoczMl/Hh4Xu7cDecSc58JRYpHyL4tIAu3eqd1yJzQX04d2BZHDkzFFvm6qJEJWOtfDSWAXbQ==}
 
   indent-string@5.0.0:
     resolution: {integrity: sha512-m6FAo/spmsW2Ab2fU35JTYwtOKa2yAwXSwgjSv1TJzh4Mh7mC3lzAOVLBprb72XsTrgkEIsl7YrFNAiDiRhIGg==}
@@ -2213,7 +2213,7 @@ snapshots:
 
   ignore-by-default@1.0.1: {}
 
-  immer@10.2.0: {}
+  immer@11.1.18: {}
 
   indent-string@5.0.0: {}
 
