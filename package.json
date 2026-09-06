@@ -47,7 +47,7 @@
     "winston": "3.19.0",
     "wretch": "2.11.1",
     "ws": "^8.21.3",
-    "zod": "3.25.76"
+    "zod": "4.5.4"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
