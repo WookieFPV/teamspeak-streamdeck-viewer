@@ -1,5 +1,4 @@
 import type { TeamSpeakClient as TeamSpeakClientTS3 } from "ts3-nodejs-library";
-import { addLastActiveTime } from "~/teamspeak/addLastActiveTime";
 import type { TeamSpeakClient } from "../teamspeakTypes";
 
 const ts3ClientMapper = (client: TeamSpeakClientTS3): TeamSpeakClient => ({

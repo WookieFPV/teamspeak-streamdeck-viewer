@@ -7,19 +7,17 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": ["dist"]
+    "includes": ["**", "!**/dist"]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space"
   },
-  "organizeImports": {
-    "enabled": true
-  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "preset": "recommended"
     }
   },
   "javascript": {

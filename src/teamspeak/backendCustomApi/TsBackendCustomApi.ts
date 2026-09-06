@@ -3,13 +3,13 @@ import WebSocket from "ws";
 import { config } from "~/config";
 import type { TsApiCustom } from "~/envVars";
 import { logger } from "~/utils/logger";
-import type { TsBackend } from "../BackendFactory";
 import { addLastActiveTime } from "../addLastActiveTime";
+import type { TsBackend } from "../BackendFactory";
 import { queryClient, queryKey } from "../queryClient";
-import { type TeamSpeakClient, clientType } from "../teamspeakTypes";
+import { clientType, type TeamSpeakClient } from "../teamspeakTypes";
 import { TsDrawClients } from "../tsDrawClients";
-import type { TsWsEvent } from "./WsEvent";
 import { getClientsQuery } from "./tsCustomApi";
+import type { TsWsEvent } from "./WsEvent";
 
 export class TsBackendCustomApi implements TsBackend {
   private readonly vars: TsApiCustom;
@@ -259,9 +259,9 @@ export class TsBackendCustomApi implements TsBackend {
     }
   }
 
-  async getClients(args: { forceRefresh?: boolean }): Promise<
-    TeamSpeakClient[]
-  > {
+  async getClients(args: {
+    forceRefresh?: boolean;
+  }): Promise<TeamSpeakClient[]> {
     return getClientsQuery(args, this.wretch);
   }
 }

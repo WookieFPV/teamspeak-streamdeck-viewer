@@ -1,5 +1,6 @@
 import { listStreamDecks } from "@elgato-stream-deck/node";
 import { logger } from "~/utils/logger";
+
 /*
 logger.info('RAW HID')
 for (const dev of HID.devices()) {

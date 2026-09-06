@@ -71,7 +71,7 @@ const observer = new QueryObserver<TeamSpeakClient[]>(queryClient, {
   queryKey: queryKey.clients,
 });
 
-const unsubscribe = observer.subscribe((result) => {
+const _unsubscribe = observer.subscribe((result) => {
   logger.info(
     "Observer",
     JSON.stringify(result.data?.map((c) => c.clientNickname)),

@@ -6,7 +6,9 @@ import type { TeamSpeakClient } from "./teamspeakTypes";
 export interface TsBackend {
   getClients({
     forceRefresh,
-  }: { forceRefresh?: boolean }): Promise<TeamSpeakClient[]>;
+  }: {
+    forceRefresh?: boolean;
+  }): Promise<TeamSpeakClient[]>;
 }
 
 export function getTsBackend(vars: typeof envVars): TsBackend {

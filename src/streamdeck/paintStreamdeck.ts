@@ -14,7 +14,7 @@ const keyPixelSize = (streamDeck: StreamDeck, index: number): number => {
   const control = streamDeck.CONTROLS.find(
     (c) => c.type === "button" && c.index === index,
   );
-  if (!control || control.type !== "button" || control.feedbackType !== "lcd") {
+  if (control?.type !== "button" || control.feedbackType !== "lcd") {
     throw new Error(`key ${index} does not support image fills`);
   }
   return control.pixelSize.width;

@@ -18,7 +18,9 @@ export class TsBackendTsApi implements TsBackend {
 
   async getClients({
     forceRefresh,
-  }: { forceRefresh?: boolean } = {}): Promise<TeamSpeakClient[]> {
+  }: {
+    forceRefresh?: boolean;
+  } = {}): Promise<TeamSpeakClient[]> {
     const ts = await getTsInstance(this.vars);
     return queryClient.fetchQuery<TeamSpeakClient[]>({
       queryKey: queryKey.clients,
