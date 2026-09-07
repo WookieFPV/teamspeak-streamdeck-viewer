@@ -23,7 +23,7 @@
   "overrides": {
     "esbuild": "^0.28.2"
   },
-  "packageManager": "pnpm@10.34.5",
+  "packageManager": "pnpm@12.3.4",
   "pnpm": {
     "onlyBuiltDependencies": [
       "@biomejs/biome",
