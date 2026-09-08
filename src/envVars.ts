@@ -74,7 +74,11 @@ export type TsApiCustom = z.infer<typeof tsApiCustom>;
 
 const rawEnvSchema = tsApiTs3.or(tsApiCustom).catch((e) => {
   logger.info("❌ invalid env vars:");
-  logger.warn(e.error.message);
+  logger.warn(
+    e.issues
+      .map((issue) => `${(issue.path ?? []).join(".")}: ${issue.message}`)
+      .join("\n"),
+  );
   throw e;
 });
 
