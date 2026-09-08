@@ -4,11 +4,12 @@
   "description": "display Teamspeak clients on your streamdeck",
   "main": "dist/index.js",
   "scripts": {
-    "build": "bun build ./src/index.ts --outdir dist --target node --format cjs --external sharp --external node-hid --external @julusian/jpeg-turbo --external cpu-features",
+    "build": "bun build ./src/index.ts --outdir dist --target node --format cjs --external sharp --external node-hid --external cpu-features",
     "start-prod": "bun dist/index.js",
     "build-watch": "bun run build --watch",
     "start-watch": "bun --watch dist/index.js",
     "start": "concurrently \"bun run build-watch\" \"bun run start-watch\"",
+    "test": "bun test",
     "typecheck": "tsc --noEmit",
     "format": "biome format --write",
     "lint": "biome lint --fix",
@@ -23,30 +24,22 @@
   "packageManager": "bun@1.4.2",
   "trustedDependencies": [
     "@biomejs/biome",
-    "@julusian/jpeg-turbo",
     "node-hid",
     "sharp"
   ],
   "dependencies": {
     "@elgato-stream-deck/node": "^7.6.3",
-    "@julusian/jpeg-turbo": "^3.0.1",
-    "@tanstack/query-core": "5.102.8",
     "dotenv": "17.4.2",
-    "immer": "11.1.18",
-    "is-online": "^12.0.2",
     "node-hid": "^3.4.0",
-    "p-wait-for": "^6.0.0",
     "sharp": "^0.35.4",
     "ts3-nodejs-library": "3.5.3",
     "winston": "3.19.0",
-    "wretch": "3.0.9",
-    "ws": "^8.21.3",
     "zod": "3.25.76"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",
     "@types/node": "26.4.1",
-    "@types/ws": "8.18.1",
+    "bun-types": "^1.4.2",
     "concurrently": "10.0.5",
     "typescript": "5.9.3"
   }

@@ -21,6 +21,8 @@ jobs:
       - name: biome
         run: bun run check-ci
 
+      - run: bun test
+
       - run: bun run typecheck
 
       - run: bun run build

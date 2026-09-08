@@ -1,43 +1,40 @@
 import { config } from "~/config";
+import { envVars } from "~/envVars";
+import { clientStateToColor } from "~/streamdeck/colors";
+import {
+  buttonCount,
+  clearKeys,
+  drawClock,
+  paintClientKey,
+} from "~/streamdeck/deck";
 import { getStreamdeck } from "~/streamdeck/getStreamdeck";
-import { drawClock, streamDeckPaintTs } from "~/streamdeck/paintStreamdeck";
+import { planDeckLayout } from "~/streamdeck/layout";
 import type { TeamSpeakClient } from "./teamspeakTypes";
-import { isMainUser } from "./tsHelper";
 
 export const TsDrawClients = async (
   clientsRaw: TeamSpeakClient[],
 ): Promise<void> => {
   const streamDeck = await getStreamdeck();
-  const numKeys = streamDeck.CONTROLS.filter((c) => c.type === "button").length;
-  const mainUser = clientsRaw.find(isMainUser);
-  const clients = clientsRaw.filter(
-    (c) => !mainUser || c.cid === mainUser?.cid,
-  );
+  const layout = planDeckLayout(clientsRaw, {
+    numKeys: buttonCount(streamDeck),
+    mainUserUid: envVars.TS3_MAIN_USER_UID,
+    clockKeyCount: config.clockKeyCount,
+    maxClientsWithClock: config.maxClientsWithClock,
+    minIdleTimeMins: config.minIdleTimeMins,
+    now: Date.now(),
+  });
 
-  // the clock lives on the last row of keys, but only while enough keys are free
-  const showClock =
-    clients.length <= config.maxClientsWithClock &&
-    numKeys - config.clockKeyCount >= clients.length;
-  const clockStart = numKeys - config.clockKeyCount;
-  const clientKeys = showClock ? clockStart : numKeys;
-
-  for (const client of clients) {
-    const i = clients.indexOf(client);
-    if (i >= clientKeys) continue;
-
-    const clientIdleTime = Date.now() - client.clientLastActiveTime;
-
-    const idleTimeMins = Math.floor(clientIdleTime / 1000 / 60);
-
-    //staticData.clientOnDeck[i] = client
-    await streamDeckPaintTs(streamDeck, client, i, idleTimeMins, mainUser);
+  for (const key of layout.paints) {
+    await paintClientKey(streamDeck, key.index, {
+      name: key.name,
+      color: clientStateToColor(key.client, layout.mainUser),
+      afkText: key.afkText,
+    });
   }
 
-  for (let i = clients.length; i < clientKeys; i++) {
-    await streamDeck.clearKey(i);
-  }
+  await clearKeys(streamDeck, layout.clearIndices);
 
-  if (showClock) {
-    await drawClock(streamDeck, [clockStart, clockStart + 1, clockStart + 2]);
+  if (layout.clockIndices) {
+    await drawClock(streamDeck, layout.clockIndices);
   }
 };

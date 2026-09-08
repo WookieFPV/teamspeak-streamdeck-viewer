@@ -21,6 +21,7 @@ Requires [bun](https://bun.sh) >= 1.4 (the version is pinned via the `packageMan
 | `bun run start`     | build in watch mode + restart on change (development)  |
 | `bun run build`     | bundle to `dist/index.js` (target: node/cjs, via bun)  |
 | `bun run start-prod`| run the built bundle: `bun dist/index.js`              |
+| `bun test`        | unit tests for the pure modules (layout, svg, events, store) |
 | `bun run check`     | biome lint + format, with autofix                      |
 | `bun run typecheck` | `tsc --noEmit`                                         |
 

@@ -6,8 +6,10 @@ are in `CLAUDE.local.md`, which is intentionally **not** committed — this repo
 ## What this is
 
 A long-running bun process that displays TeamSpeak clients on an Elgato Stream Deck. It is not a
-library and has no tests: it polls/subscribes to a TeamSpeak backend, then paints one key per
-client. It runs 24/7 on a raspberry pi with a Stream Deck Mini attached.
+library: it polls/subscribes to a TeamSpeak backend, then paints one key per
+client. It runs 24/7 on a raspberry pi with a Stream Deck Mini attached. Pure logic
+(layout, svg rendering, event parsing, caching) has `bun test` unit tests; the rest is
+verified by running the real thing against the hardware.
 
 ## Toolchain constraints (read before upgrading anything)
 
@@ -26,7 +28,7 @@ running **bun** (no node/nvm on the device anymore — see below). That drives e
   (including enough Node-API/N-API compat for the native addons below) directly.
 - **Native postinstall scripts are blocked by default** — bun's security model. Packages that need
   their install script to run (to build or unpack a native binding) must be listed in
-  `trustedDependencies` in `package.json`: currently `sharp`, `node-hid`, `@julusian/jpeg-turbo`,
+  `trustedDependencies` in `package.json`: currently `sharp`, `node-hid`,
   `@biomejs/biome`. Run `bun pm untrusted` to see what's currently blocked, `bun pm trust <name>` to
   allow one, or add it under `trustedDependencies` directly (preferred — keeps it in git).
 - Build target is `bun build ./src/index.ts --outdir dist --target node --format cjs` (see the
@@ -35,11 +37,11 @@ running **bun** (no node/nvm on the device anymore — see below). That drives e
   nothing about the runtime module system changed. Note that unlike tsup/esbuild, bun's bundler does
   **not** rewrite `__dirname` to the output file's directory — it bakes in the original source file's
   path instead (see "Things that will bite you" below for why that broke asset loading and how it was
-  fixed). Bun's bundler resolves ESM-only deps (`wretch`, `p-wait-for`, `is-online`) itself at build
-  time — no more `require(esm)` runtime workaround needed.
+  fixed). All HTTP/websocket code uses the platform `fetch`/`WebSocket` globals, so there are
+  no ESM-only runtime dependencies left to worry about.
 - Native modules that can't be bundled (their `require()` resolves a real `.node` binary via a
   relative path that bundling would break) are passed as `--external` in the `build` script: `sharp`,
-  `node-hid`, `@julusian/jpeg-turbo`, and `cpu-features` (ssh2's optional native speedup, deliberately
+  `node-hid`, and `cpu-features` (ssh2's optional native speedup, deliberately
   never built — see next point — but the bundler still needs telling not to try to resolve its
   `.node` file at build time, since `ssh2` requires it in a `try/catch` that only helps at runtime).
   If a new native dependency is added, it needs the same `--external` treatment or the build fails
@@ -50,9 +52,14 @@ running **bun** (no node/nvm on the device anymore — see below). That drives e
   path (wrapped in `try/catch` in `ssh2`'s own source) — this was originally about avoiding a
   toolchain on the old OS; worth reconsidering now that `build-essential` is installed on the device
   anyway for other native deps.
-- Native deps that must keep building on aarch64: `sharp`, `node-hid`, `@julusian/jpeg-turbo`. All
-  three were smoke-tested loading their native binding directly under bun (x86_64 dev sandbox) before
+- Native deps that must keep building on aarch64: `sharp`, `node-hid`. Both
+  were smoke-tested loading their native binding directly under bun (x86_64 dev sandbox) before
   this migration; the actual aarch64 prebuilds still need verifying on the pi itself the first time.
+  `@julusian/jpeg-turbo` (an optional peer of the elgato deck lib) is deliberately *not* a direct
+  dependency anymore: the bundler inlines its JS with a build-machine `__dirname`, so its native
+  binding never loads from the bundle and the deck lib falls back to pure-JS `jpeg-js` encoding.
+  Key paints still work, just slightly slower — acceptable on purpose to avoid a cmake-js toolchain
+  on the pi.
 - The Elgato Stream Deck Mini needs udev rules granting the `pi` user (via the `plugdev` group)
   access to the USB HID device — not in this repo, device-specific, see `CLAUDE.local.md`.
 
@@ -64,11 +71,12 @@ running **bun** (no node/nvm on the device anymore — see below). That drives e
 | `bun run start`     | dev: `bun build --watch` + `bun --watch dist/index.js`, via `concurrently` |
 | `bun run build`     | bundle to `dist/index.js` (cjs, target node, native deps external) |
 | `bun run start-prod`| `bun dist/index.js` — what production runs                 |
+| `bun test`          | unit tests for the pure modules (layout, svg, events, store) |
 | `bun run check`     | biome lint + format with autofix                            |
 | `bun run check-ci`  | `biome ci`, non-mutating (used by CI)                        |
 | `bun run typecheck` | `tsc --noEmit`                                              |
 
-CI (`.github/workflows/ci.yml`) runs check-ci, typecheck and build on bun.
+CI (`.github/workflows/ci.yml`) runs bun test, check-ci, typecheck and build on bun.
 
 ## Structure
 
@@ -91,18 +99,20 @@ the process never dies.
     recycles the socket when the server's `heartbeat` stops arriving (half open tcp), and a
     single-flight reconnect with backoff guarded by a generation counter so two sockets can never
     run at once. Timings live in `config.ws`.
-  - `queryClient.ts` — `@tanstack/query-core` cache shared by the backends.
+  - `store.ts` (`src/utils/`) — tiny explicit cache each backend owns: `fetch()` with a
+    stale window, `invalidate()` on events. No hidden fetch semantics.
   - `tsDrawClients.ts` / `tsHelper.ts` / `addLastActiveTime.ts` — turn a client list into what goes
     on the keys (ordering, idle time, polling delay).
-- `src/streamdeck/` — `getStreamdeck.ts` opens the device, `paintStreamdeck.ts` composites an SVG
-  text layer onto a background PNG with sharp and pushes the raw buffer to a key, `colors.ts` maps
-  client state (talking, muted, afk, main user) to one of the PNGs in `assets/`.
+- `src/streamdeck/` — `getStreamdeck.ts` opens the device, `layout.ts` plans which client goes on
+  which key (pure, tested), `renderer.ts` builds the SVG text layer (pure, tested), `deck.ts`
+  composites it onto a background PNG with sharp and pushes the raw buffer to a key, `colors.ts`
+  maps client state (talking, muted, afk, main user) to one of the PNGs in `assets/`.
 - `src/utils/logger.ts` — winston. Everything logs through it, never `console.log`.
 
 ## Things that will bite you
 
 - **`dist/` is not in git.** After pulling on the device you must `bun run build` before restarting.
-- **Asset paths are `cwd`-relative, not `__dirname`-relative.** `paintStreamdeck.ts` resolves
+- **Asset paths are `cwd`-relative, not `__dirname`-relative.** `deck.ts` resolves
   `path.resolve(process.cwd(), "assets", ...)`. This used to be `__dirname`-based (relying on the
   bundle landing in `dist/`, one level below the repo root, same depth as `assets/`), but bun's
   bundler bakes `__dirname` in as the *original source file's absolute path on the machine that ran
@@ -115,4 +125,5 @@ the process never dies.
   systemd unit's `WorkingDirectory=` and asset resolution above both depend on this.
 - The main loop catches everything and keeps going, so failures show up as repeated log lines
   rather than a crash. Read the log, don't assume a silent process is healthy.
-- There are no tests. Verify changes by running the real thing against the hardware.
+- The websocket uses an `access_token` query parameter (native `WebSocket` can't send handshake
+  headers) — the customApi server must accept query-param auth or the socket won't connect.
