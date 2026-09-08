@@ -3,7 +3,7 @@
 The app is a long-running process; on the production device it is managed by systemd.
 
 `streamdeck-ts-viewer.service` assumes the checkout lives in `/home/pi/streamdeck-ts-viewer`, runs
-as user `pi`, and finds node 24 under `/home/pi/.nvm/versions/node/v24.20.0/bin`. Adjust
+as user `pi`, and finds bun under `/home/pi/.bun/bin`. Adjust
 `User`/`Group`/`WorkingDirectory`/`Environment=PATH` if your device differs.
 
 ## Install
@@ -20,11 +20,11 @@ would start a copy after a reboot and the second one fails to claim the Stream D
 ## Day to day
 
 ```sh
-sudo systemctl restart streamdeck-ts-viewer   # after a `pnpm build`
+sudo systemctl restart streamdeck-ts-viewer   # after a `bun run build`
 sudo systemctl status streamdeck-ts-viewer
 tail -f ~/streamdeck.log                      # the app's own log (truncated on each start)
 journalctl -u streamdeck-ts-viewer            # only start/stop/crash noise
 ```
 
-`dist/` is not in git, so a deployment is `git pull && pnpm install --frozen-lockfile && pnpm build`
+`dist/` is not in git, so a deployment is `git pull && bun install --frozen-lockfile && bun run build`
 followed by a restart.

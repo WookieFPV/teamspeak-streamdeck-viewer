@@ -5,52 +5,69 @@ are in `CLAUDE.local.md`, which is intentionally **not** committed — this repo
 
 ## What this is
 
-A long-running node process that displays TeamSpeak clients on an Elgato Stream Deck. It is not a
+A long-running bun process that displays TeamSpeak clients on an Elgato Stream Deck. It is not a
 library and has no tests: it polls/subscribes to a TeamSpeak backend, then paints one key per
 client. It runs 24/7 on a raspberry pi with a Stream Deck Mini attached.
 
 ## Toolchain constraints (read before upgrading anything)
 
 The production device is a Raspberry Pi Zero 2 W (**aarch64**, 64-bit Raspberry Pi OS, ~427MB RAM)
-running **node 24 (latest LTS)**. That drives everything:
+running **bun** (no node/nvm on the device anymore — see below). That drives everything:
 
-- **This device used to be 32-bit (armv7l) Raspbian Buster.** It was reflashed to 64-bit specifically
-  to get past a hard ceiling: Buster's `libstdc++6` (gcc 8.3) only provides up to `GLIBCXX_3.4.25`,
-  and Node's official builds need `3.4.26`+ starting at Node 20 — so on the old OS, Node 18 was the
-  real ceiling regardless of architecture-level armv7l availability (verified empirically; see the
-  git history around the "revert: node 22 / pnpm 12 bump" commit on `master` for the full story
-  before this branch was merged). None of that applies anymore: on 64-bit, there's no known Node
-  version ceiling — track current LTS and bump when it moves, same as any normal project.
-- **bun now works here.** The old 32-bit-only limitation (bun ships arm64 builds only) is gone. Not
-  adopted yet — would still need to redo the tsup/build story — but no longer blocked architecturally.
-- **pnpm is on 12.x** via the `packageManager` field. pnpm 11 removed `package.json`'s `pnpm.*`
-  config block entirely — `onlyBuiltDependencies` now lives in `pnpm-workspace.yaml` as `allowBuilds`
-  (a name → boolean map, replacing the old array-of-allowed-names shape). `ssh2` / `cpu-features`
-  are set to `false` there — see below.
-- Build target is `node24` (`tsup.config.ts`), `engines.node` is `>=24`, `.nvmrc` is `24`. `wretch`
-  (v3, ESM-only) and `p-wait-for` (v6, ESM-only) are required directly from the cjs bundle via
-  `require(esm)`, stable since node 22.12 — comfortably covered now. `sharp` is on `^0.35.4`.
-- `ssh2` / `cpu-features` are deliberately set to `false` in `pnpm-workspace.yaml`'s `allowBuilds`:
-  optional native speedups that would need a node-gyp toolchain on the pi. The pure JS fallback is
-  used — this was originally about avoiding a toolchain on the old OS; worth reconsidering now that
-  `build-essential` is installed on the device anyway for other native deps.
-- Native deps that must keep building on aarch64: `sharp`, `node-hid`, `@julusian/jpeg-turbo`.
+- **This device used to be 32-bit (armv7l) Raspbian Buster.** It was reflashed to 64-bit to get past
+  a hard node-version ceiling (Buster's `libstdc++6` topped out below what Node 20+ needs — see git
+  history around the "revert: node 22 / pnpm 12 bump" commit on `master`), and later migrated from
+  node+pnpm to **bun** entirely. Bun ships arm64 builds only, so the 32-bit-only limitation that used
+  to block it is gone on the 64-bit OS; there's no known version ceiling for bun on this device either
+  — track current bun and bump when it moves, same as any normal project.
+- **Runtime and package manager are both bun** — `bun install` reads/writes `bun.lock` (a human
+  readable text lockfile, not the old binary `bun.lockb` format), pinned via the `packageManager`
+  field. There is no separate node install: bun implements the node APIs this project needs
+  (including enough Node-API/N-API compat for the native addons below) directly.
+- **Native postinstall scripts are blocked by default** — bun's security model. Packages that need
+  their install script to run (to build or unpack a native binding) must be listed in
+  `trustedDependencies` in `package.json`: currently `sharp`, `node-hid`, `@julusian/jpeg-turbo`,
+  `@biomejs/biome`. Run `bun pm untrusted` to see what's currently blocked, `bun pm trust <name>` to
+  allow one, or add it under `trustedDependencies` directly (preferred — keeps it in git).
+- Build target is `bun build ./src/index.ts --outdir dist --target node --format cjs` (see the
+  `build` script in `package.json`) — replaced `tsup`, which is no longer a dependency. `--target
+  node` (not `bun`) plus `--format cjs` is deliberate: it keeps `__dirname` working for the
+  dist-relative asset paths (see "Things that will bite you" below) and keeps CJS semantics the same
+  as the old tsup output, so nothing else about the runtime behavior changed. Bun's bundler resolves
+  ESM-only deps (`wretch`, `p-wait-for`, `is-online`) itself at build time — no more `require(esm)`
+  runtime workaround needed.
+- Native modules that can't be bundled (their `require()` resolves a real `.node` binary via a
+  relative path that bundling would break) are passed as `--external` in the `build` script: `sharp`,
+  `node-hid`, `@julusian/jpeg-turbo`, and `cpu-features` (ssh2's optional native speedup, deliberately
+  never built — see next point — but the bundler still needs telling not to try to resolve its
+  `.node` file at build time, since `ssh2` requires it in a `try/catch` that only helps at runtime).
+  If a new native dependency is added, it needs the same `--external` treatment or the build fails
+  immediately with an unresolved-`.node`-file error (easy to spot, not silent).
+- `ssh2` / `cpu-features`: `cpu-features` is an optional native speedup for `ssh2` (pulled in
+  transitively, not a direct dependency) that needs a node-gyp toolchain. It's deliberately left out
+  of `trustedDependencies`, so its install script never runs and `ssh2` falls back to its pure-JS
+  path (wrapped in `try/catch` in `ssh2`'s own source) — this was originally about avoiding a
+  toolchain on the old OS; worth reconsidering now that `build-essential` is installed on the device
+  anyway for other native deps.
+- Native deps that must keep building on aarch64: `sharp`, `node-hid`, `@julusian/jpeg-turbo`. All
+  three were smoke-tested loading their native binding directly under bun (x86_64 dev sandbox) before
+  this migration; the actual aarch64 prebuilds still need verifying on the pi itself the first time.
 - The Elgato Stream Deck Mini needs udev rules granting the `pi` user (via the `plugdev` group)
   access to the USB HID device — not in this repo, device-specific, see `CLAUDE.local.md`.
 
 ## Commands
 
-| command           | what it does                                        |
-|-------------------|-----------------------------------------------------|
-| `pnpm install`    | install (uses `pnpm-lock.yaml`)                     |
-| `pnpm start`      | dev: tsup watch + nodemon restart                   |
-| `pnpm build`      | bundle to `dist/index.js` (cjs, target node24)      |
-| `pnpm start-prod` | `node dist/index.js` — what production runs         |
-| `pnpm check`      | biome lint + format with autofix                    |
-| `pnpm check-ci`   | `biome ci`, non-mutating (used by CI)               |
-| `pnpm typecheck`  | `tsc --noEmit`                                      |
+| command             | what it does                                              |
+|---------------------|------------------------------------------------------------|
+| `bun install`       | install (uses `bun.lock`)                                  |
+| `bun run start`     | dev: `bun build --watch` + `bun --watch dist/index.js`, via `concurrently` |
+| `bun run build`     | bundle to `dist/index.js` (cjs, target node, native deps external) |
+| `bun run start-prod`| `bun dist/index.js` — what production runs                 |
+| `bun run check`     | biome lint + format with autofix                            |
+| `bun run check-ci`  | `biome ci`, non-mutating (used by CI)                        |
+| `bun run typecheck` | `tsc --noEmit`                                              |
 
-CI (`.github/workflows/ci.yml`) runs check-ci, typecheck and build on node 24.
+CI (`.github/workflows/ci.yml`) runs check-ci, typecheck and build on bun.
 
 ## Structure
 
@@ -83,10 +100,12 @@ the process never dies.
 
 ## Things that will bite you
 
-- **`dist/` is not in git.** After pulling on the device you must `pnpm build` before restarting.
+- **`dist/` is not in git.** After pulling on the device you must `bun run build` before restarting.
 - **Asset paths are `dist`-relative.** `paintStreamdeck.ts` resolves `path.resolve(__dirname,
   "../assets/...")`, which only works because the bundle lands in `dist/`. Don't "fix" this to be
-  src-relative, and note it breaks if the output ever moves or goes ESM.
+  src-relative. This is also why the build targets CJS (`--format cjs`), not ESM: `__dirname` doesn't
+  exist in ESM (`import.meta.dirname` would be the equivalent) — if the build ever moves to ESM
+  output, this needs updating too, not just left to break.
 - **dotenv reads `<cwd>/.env`**, so the working directory the process is started from matters.
 - The main loop catches everything and keeps going, so failures show up as repeated log lines
   rather than a crash. Read the log, don't assume a silent process is healthy.

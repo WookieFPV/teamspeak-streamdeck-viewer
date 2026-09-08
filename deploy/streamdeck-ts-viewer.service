@@ -1,5 +1,5 @@
 [Unit]
-# systemd unit for the production device (raspberry pi, node 24 via nvm).
+# systemd unit for the production device (raspberry pi, bun).
 # Install: see deploy/README.md
 Description=TeamSpeak Stream Deck viewer
 After=network-online.target
@@ -11,13 +11,13 @@ User=pi
 Group=pi
 WorkingDirectory=/home/pi/streamdeck-ts-viewer
 
-# nvm's bin dir must be on PATH; systemd does not read the user's profile.
-Environment=PATH=/home/pi/.nvm/versions/node/v24.20.0/bin:/usr/local/bin:/usr/bin:/bin
+# bun's install dir must be on PATH; systemd does not read the user's profile.
+Environment=PATH=/home/pi/.bun/bin:/usr/local/bin:/usr/bin:/bin
 
-# node is started directly rather than through `pnpm start-prod`: the pnpm wrapper would stay alive
-# as the parent and costs ~95MB RSS on a 427MB device.
+# bun is started directly against dist/index.js (already bundled, native addons external)
+# rather than through `bun run start-prod`, to keep exactly one process as the systemd-managed PID.
 # The redirect keeps ~/streamdeck.log as the single runtime log, truncated on each start.
-ExecStart=/bin/sh -c 'exec node dist/index.js > /home/pi/streamdeck.log 2>&1'
+ExecStart=/bin/sh -c 'exec bun dist/index.js > /home/pi/streamdeck.log 2>&1'
 
 Restart=always
 RestartSec=10

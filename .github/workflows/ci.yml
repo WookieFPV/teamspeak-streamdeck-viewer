@@ -11,19 +11,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
-
-      # node 24 (latest LTS) mirrors the raspberry pi that runs this in production
-      - uses: actions/setup-node@v7
+      # bun's version mirrors the raspberry pi that runs this in production
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
+          bun-version: "1.4.2"
 
-      - run: pnpm install --frozen-lockfile
+      - run: bun install --frozen-lockfile
 
       - name: biome
-        run: pnpm check-ci
+        run: bun run check-ci
 
-      - run: pnpm typecheck
+      - run: bun run typecheck
 
-      - run: pnpm build
+      - run: bun run build

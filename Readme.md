@@ -7,23 +7,22 @@ Additionally, when connected, it provides a real-time display of all clients con
 
 ## Getting Started
 
-Requires Node.js >= 18.12 and [pnpm](https://pnpm.io) 10 (`corepack enable pnpm`, the version is
-pinned via the `packageManager` field).
+Requires [bun](https://bun.sh) >= 1.4 (the version is pinned via the `packageManager` field).
 
-1. Install the dependencies: `pnpm install`.
+1. Install the dependencies: `bun install`.
 2. Create a `.env` file by copying the provided example: `cp .env.example .env`.
 3. Fill in the server query credentials in the newly created `.env` file.
-4. Start it in watch mode: `pnpm start`.
+4. Start it in watch mode: `bun run start`.
 
 ### Scripts
 
-| command            | what it does                                          |
-|--------------------|-------------------------------------------------------|
-| `pnpm start`       | build in watch mode + restart on change (development) |
-| `pnpm build`       | bundle to `dist/index.js` (target: node 18)           |
-| `pnpm start-prod`  | run the built bundle: `node dist/index.js`            |
-| `pnpm check`       | biome lint + format, with autofix                     |
-| `pnpm typecheck`   | `tsc --noEmit`                                        |
+| command             | what it does                                          |
+|---------------------|--------------------------------------------------------|
+| `bun run start`     | build in watch mode + restart on change (development)  |
+| `bun run build`     | bundle to `dist/index.js` (target: node/cjs, via bun)  |
+| `bun run start-prod`| run the built bundle: `bun dist/index.js`              |
+| `bun run check`     | biome lint + format, with autofix                      |
+| `bun run typecheck` | `tsc --noEmit`                                         |
 
 ## Key Features
 
@@ -42,15 +41,15 @@ pinned via the `packageManager` field).
    2. add rule file: `sudo nano /etc/udev/rules.d/99-streamdeck.rules`
    3. add `SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0090", MODE="0664", GROUP="plugdev"` (you might adapt the idProduct based of the output from `lsusb`)
    4. reload rules `sudo udevadm trigger`
-2. default font might not be available (replace with font on system or install font)
-3. the Pi Zero is an armv6 board, so Node comes from the
-   [unofficial builds](https://unofficial-builds.nodejs.org/download/release/) — keep it at 18 or
-   newer, that is what `dist/index.js` is built for
-4. build on a faster machine and copy `dist/` + `assets/` + `.env` over if `pnpm build` is too slow
-   on the Pi
+2. default font might not be available (`fontconfig` is needed for sharp to render text onto keys;
+   install it plus a font like `fonts-dejavu-core` if missing)
+3. bun ships prebuilt aarch64 (64-bit) binaries directly — no unofficial builds needed, unlike the
+   old 32-bit armv7l setup this project used to run on
+4. build on a faster machine and copy `dist/` + `assets/` + `.env` over if `bun run build` is too
+   slow on the Pi
 
-The `ssh2` / `cpu-features` build scripts are intentionally not approved (see `onlyBuiltDependencies`
-in `package.json`): they are optional native speedups for the Teamspeak query connection that would
+The `ssh2` / `cpu-features` install script is intentionally not trusted (see `trustedDependencies`
+in `package.json`): it's an optional native speedup for the Teamspeak query connection that would
 need a full node-gyp toolchain on the Pi, and the pure JS fallback works fine.
 
 ## Roadmap

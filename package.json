@@ -4,11 +4,11 @@
   "description": "display Teamspeak clients on your streamdeck",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsup",
-    "start-prod": "node dist/index.js",
-    "build-watch": "tsup --watch",
-    "start-watch": "nodemon dist/index.js",
-    "start": "concurrently \"pnpm build-watch\" \"pnpm start-watch\"",
+    "build": "bun build ./src/index.ts --outdir dist --target node --format cjs --external sharp --external node-hid --external @julusian/jpeg-turbo --external cpu-features",
+    "start-prod": "bun dist/index.js",
+    "build-watch": "bun run build --watch",
+    "start-watch": "bun --watch dist/index.js",
+    "start": "concurrently \"bun run build-watch\" \"bun run start-watch\"",
     "typecheck": "tsc --noEmit",
     "format": "biome format --write",
     "lint": "biome lint --fix",
@@ -18,12 +18,15 @@
   "author": "Lukas Müller",
   "license": "ISC",
   "engines": {
-    "node": ">=24"
+    "bun": ">=1.4"
   },
-  "overrides": {
-    "esbuild": "^0.28.2"
-  },
-  "packageManager": "pnpm@12.3.4+sha512.961aa41fb077da3a04a441d9f8e15ebc0c96da8ef710b2eb67bf9ee7cb0610eabd48f1fd85f51cffe73846785fa0f87c56a3a872a1d893f8446741b5cce45457",
+  "packageManager": "bun@1.4.2",
+  "trustedDependencies": [
+    "@biomejs/biome",
+    "@julusian/jpeg-turbo",
+    "node-hid",
+    "sharp"
+  ],
   "dependencies": {
     "@elgato-stream-deck/node": "^7.6.3",
     "@julusian/jpeg-turbo": "^3.0.1",
@@ -45,8 +48,6 @@
     "@types/node": "26.4.1",
     "@types/ws": "8.18.1",
     "concurrently": "10.0.5",
-    "nodemon": "^3.1.14",
-    "tsup": "^8.5.1",
     "typescript": "5.9.3"
   }
 }
