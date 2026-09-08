@@ -1,9 +1,22 @@
+import * as path from "node:path";
 import * as dotenv from "dotenv"; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 import { z } from "zod";
 import { logger } from "~/utils/logger";
 
-// dotenv is loaded when used because esbuild is super optimizing imports...
-dotenv.config();
+// dotenv reads <cwd>/.env, so the working directory the process is started
+// from matters (same invariant as asset resolution - the systemd unit's
+// WorkingDirectory= covers both). DOTENV_PATH overrides the file location.
+// A missing file is not fatal on its own: real env vars (systemd
+// Environment=, docker -e, ...) validate just as well; zod below is what
+// actually fails fast on missing config.
+const dotenvPath =
+  process.env.DOTENV_PATH ?? path.resolve(process.cwd(), ".env");
+const dotenvResult = dotenv.config({ path: dotenvPath });
+if (dotenvResult.error) {
+  logger.warn(
+    `no .env loaded from "${dotenvPath}" (${dotenvResult.error.message}) - using process env as-is`,
+  );
+}
 
 /**
  * Font sizes are numbers (svg px). The old `.env.example` used `"16px"`
@@ -26,6 +39,10 @@ const baseEnvSchema = z.object({
   // pairs, split on the first "=" so nicknames may contain "|" or ",".
   // e.g. NICKNAME_MAPPING="FK1024 | Felix=Felix;N1m4=Nima"
   NICKNAME_MAPPING: z.string().optional(),
+  // explicit device selector: when several decks are (or were) plugged in,
+  // `listStreamDecks()[0]` order is arbitrary and can flip across re-plugs.
+  // Set to a hid path (see scriptListStreamdecks) to pin one device.
+  STREAMDECK_PATH: z.string().optional(),
 });
 
 const tsApiTs3 = z
@@ -71,6 +88,7 @@ const common = {
   STREAMDECK_USER_FONTSIZE: raw.STREAMDECK_USER_FONTSIZE ?? 18,
   STREAMDECK_AFK_FONTSIZE: raw.STREAMDECK_AFK_FONTSIZE ?? 14,
   NICKNAME_MAPPING: raw.NICKNAME_MAPPING,
+  STREAMDECK_PATH: raw.STREAMDECK_PATH,
 } as const;
 
 /**

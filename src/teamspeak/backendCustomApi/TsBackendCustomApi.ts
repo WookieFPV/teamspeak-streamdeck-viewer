@@ -1,5 +1,6 @@
 import { config } from "~/config";
 import type { TsApiCustom } from "~/envVars";
+import { isShuttingDown } from "~/streamdeck/shutdown";
 import { logger } from "~/utils/logger";
 import { requestRefresh } from "~/utils/refreshTrigger";
 import type { TsBackend } from "../BackendFactory";
@@ -21,7 +22,8 @@ const wsUrlWithToken = (base: string, token: string): string => {
 
 export class TsBackendCustomApi implements TsBackend {
   private readonly api: CustomApiClient;
-  private readonly wsUrl: string;
+  private readonly wsBaseUrl: string;
+  private readonly wsToken: string;
   private socket: WebSocket | undefined;
   /**
    * Incremented for every socket we create. Handlers of a superseded socket
@@ -42,20 +44,28 @@ export class TsBackendCustomApi implements TsBackend {
       baseUrl: vars.BACKEND_URL,
       token: vars.BACKEND_TOKEN,
     });
-    this.wsUrl = wsUrlWithToken(vars.BACKEND_WS_URL, vars.BACKEND_TOKEN);
+    this.wsBaseUrl = vars.BACKEND_WS_URL;
+    this.wsToken = vars.BACKEND_TOKEN;
 
     this.connect();
   }
 
+  /** auth query param, rebuilt for every (re)connect from one place */
+  private wsUrl(): string {
+    return wsUrlWithToken(this.wsBaseUrl, this.wsToken);
+  }
+
   private connect() {
-    this.closeSocket();
+    // invalidate old handlers first: anything the previous socket still fires
+    // (a late onclose during close) sees a stale generation and bails out
     const generation = ++this.generation;
+    this.closeSocket();
     this.lastMessageAt = Date.now();
     logger.info(`[WS] connect (#${generation})`);
 
     let socket: WebSocket;
     try {
-      socket = new WebSocket(this.wsUrl);
+      socket = new WebSocket(this.wsUrl());
     } catch (error) {
       // a throw here used to kill the reconnect chain for good
       logger.warn(`[WS] could not create socket: ${String(error)}`);
@@ -85,8 +95,7 @@ export class TsBackendCustomApi implements TsBackend {
 
     socket.onclose = (event) => {
       if (!isCurrent()) return;
-      logger.info(`[WS] onclose (#${generation}) code: ${event.code}`);
-      this.scheduleReconnect(`closed with code ${event.code}`);
+      this.handleClose(event.code, event.reason ?? "");
     };
 
     socket.onmessage = (event) => {
@@ -100,7 +109,43 @@ export class TsBackendCustomApi implements TsBackend {
     };
   }
 
-  /** detaches all handlers of the current socket and closes it */
+  /** close codes we treat as "our credentials are wrong, fast retries won't help" */
+  private isAuthCloseCode(code: number): boolean {
+    return code === 1008 || (code >= 4400 && code < 4500);
+  }
+
+  private handleClose(code: number, reason: string) {
+    const suffix = reason ? ` (${reason})` : "";
+    // WHATWG sockets surface a rejected handshake (e.g. 401 on a bad token)
+    // as an error followed by a close, so auth failures land here too
+    if (this.isAuthCloseCode(code)) {
+      logger.error(
+        `[WS] closed with code ${code}${suffix} - BACKEND_TOKEN looks invalid, check the token (retrying with backoff)`,
+      );
+      // don't hammer the server with a token it will never accept
+      this.scheduleReconnect(`auth close ${code}`, {
+        floorDelayMs: config.ws.reconnectMaxDelayMs,
+      });
+      return;
+    }
+    switch (code) {
+      case 1000:
+      case 1001:
+        // clean shutdown / server going away (deploy) - just come back
+        logger.info(`[WS] onclose code: ${code}${suffix}`);
+        break;
+      case 1006:
+        // no close frame at all: network drop, killed peer, half-open tcp
+        logger.warn(`[WS] abnormal close (1006, no close frame)${suffix}`);
+        break;
+      default:
+        logger.info(`[WS] onclose code: ${code}${suffix}`);
+    }
+    this.scheduleReconnect(`closed with code ${code}`);
+  }
+
+  /** detaches all handlers of the current socket and closes it. Idempotent -
+   * safe to call from both connect() and scheduleReconnect(). */
   private closeSocket() {
     const socket = this.socket;
     this.socket = undefined;
@@ -109,11 +154,19 @@ export class TsBackendCustomApi implements TsBackend {
     socket.onerror = null;
     socket.onclose = null;
     socket.onmessage = null;
-    socket.close();
+    try {
+      socket.close();
+    } catch (error) {
+      logger.debug(`[WS] close threw: ${String(error)}`);
+    }
   }
 
-  private scheduleReconnect(reason: string) {
+  private scheduleReconnect(
+    reason: string,
+    opts: { floorDelayMs?: number } = {},
+  ) {
     if (this.reconnectTimer) return; // a reconnect is already pending
+    if (isShuttingDown()) return;
     this.stopWatchdog();
     this.closeSocket();
 
@@ -122,7 +175,10 @@ export class TsBackendCustomApi implements TsBackend {
       config.ws.reconnectMinDelayMs * 2 ** (this.reconnectAttempt - 1),
       config.ws.reconnectMaxDelayMs,
     );
-    const delay = Math.round(backoff * (0.8 + Math.random() * 0.4));
+    const delay = Math.max(
+      Math.round(backoff * (0.8 + Math.random() * 0.4)),
+      opts.floorDelayMs ?? 0,
+    );
     logger.info(
       `[WS] reconnect #${this.reconnectAttempt} in ${Math.round(delay / 1000)}s (${reason})`,
     );

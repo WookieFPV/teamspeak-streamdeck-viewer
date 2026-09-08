@@ -1,5 +1,6 @@
 import { config } from "~/config";
 import { envVars } from "~/envVars";
+import { verifyAssetsOrThrow } from "~/streamdeck/assets";
 import { getStreamdeck } from "~/streamdeck/getStreamdeck";
 import { isShuttingDown, markShuttingDown } from "~/streamdeck/shutdown";
 import { paintStatusScreen } from "~/streamdeck/status";
@@ -12,6 +13,10 @@ import { waitForRefresh } from "~/utils/refreshTrigger";
 
 const runTsViewer = async () => {
   logger.info("run runTsViewer");
+  logger.info(`cwd: ${process.cwd()}`);
+  // assets + .env are cwd-relative (see streamdeck/assets.ts) - fail here
+  // with a clear error instead of obscure per-key sharp failures later
+  verifyAssetsOrThrow();
   // the deck itself is the very first thing brought up, so startup progress
   // can be shown on it as early as possible - just one status tile plus the
   // clock, since there is no client data to show yet
@@ -50,7 +55,13 @@ const runTsViewer = async () => {
   }
 };
 
-runTsViewer();
+runTsViewer().catch((error: unknown) => {
+  // boot failures (bad env, missing assets) are fail-fast by design - log the
+  // reason and exit non-zero so systemd restarts us; the file transport keeps
+  // the history across restarts
+  logger.error(`fatal boot error: ${String(error)}`);
+  process.exit(1);
+});
 
 // systemd stops the process with SIGTERM (Ctrl-C is SIGINT): without this
 // the deck kept showing stale client data and in-flight work hung the exit.

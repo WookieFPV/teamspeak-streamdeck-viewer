@@ -2,7 +2,13 @@ import type { StreamDeck } from "@elgato-stream-deck/node";
 import { config } from "~/config";
 import type { Colors } from "./colors";
 import { getCornerButtonIndex } from "./controlLayout";
-import { buttonIndices, clearKeys, drawClock, paintKey } from "./deck";
+import {
+  buttonIndices,
+  clearKeys,
+  drawClock,
+  invalidatePaintCaches,
+  paintKey,
+} from "./deck";
 
 /**
  * Shows a single-tile status message (top-left) instead of client data, for
@@ -17,6 +23,10 @@ export const paintStatusScreen = async (
   color: Colors,
   subText = "",
 ) => {
+  // the status tile + clears overwrite keys whose content the diff cache still
+  // describes as client data - drop it so the next client paint isn't skipped
+  invalidatePaintCaches();
+
   const buttons = buttonIndices(streamDeck);
   const statusIndex = getCornerButtonIndex(streamDeck, "top-left");
   if (statusIndex === undefined) return;
