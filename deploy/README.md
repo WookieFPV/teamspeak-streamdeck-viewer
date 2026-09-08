@@ -3,7 +3,7 @@
 The app is a long-running process; on the production device it is managed by systemd.
 
 `streamdeck-ts-viewer.service` assumes the checkout lives in `/home/pi/streamdeck-ts-viewer`, runs
-as user `pi`, and finds node 22 under `/home/pi/.nvm/versions/node/v22.23.2/bin`. Adjust
+as user `pi`, and finds node 24 under `/home/pi/.nvm/versions/node/v24.20.0/bin`. Adjust
 `User`/`Group`/`WorkingDirectory`/`Environment=PATH` if your device differs.
 
 ## Install

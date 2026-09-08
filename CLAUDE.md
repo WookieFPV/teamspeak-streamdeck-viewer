@@ -11,37 +11,32 @@ client. It runs 24/7 on a raspberry pi with a Stream Deck Mini attached.
 
 ## Toolchain constraints (read before upgrading anything)
 
-The production device is a Raspberry Pi Zero 2 W (armv7l, 32-bit Raspbian Buster, ~427MB RAM)
-running **node 22**. That drives everything:
+The production device is a Raspberry Pi Zero 2 W (**aarch64**, 64-bit Raspberry Pi OS, ~427MB RAM)
+running **node 24 (latest LTS)**. That drives everything:
 
-- **Node 22 is the ceiling, not a preference.** Node dropped official `linux-armv7l` prebuilt
-  binaries starting with Node 24 (32-bit ARM was downgraded to experimental); the unofficial-builds
-  mirror stopped shipping them too. 22.x (LTS "Jod") is the newest version with an official armv7l
-  tarball. Don't bump past 22 without checking nodejs.org's dist listing for a `linux-armv7l` file
-  under the target version first — a bare "latest LTS" bump (e.g. via Renovate) will silently
-  produce a `.nvmrc`/`engines` value that has no working binary for this device.
-- **bun does not work there.** It only ships arm64 builds; this device is 32-bit. A bun migration
-  was tried and reverted before this was well understood. The only way to unlock bun is reflashing
-  the device to 64-bit Raspberry Pi OS (aarch64) — a deliberate, disruptive project, not a toolchain
-  tweak. Stay on node + tsup unless that happens.
-- **pnpm is on 12.x** via the `packageManager` field (bumped from 10.x now that node 22 clears
-  pnpm 11's `>=22.13` floor; pnpm 12 itself relaxed back down to `>=18`, so this wasn't strictly
-  node-gated, just done alongside the node bump). pnpm 11 removed `package.json`'s `pnpm.*` config
-  block entirely — `onlyBuiltDependencies` now lives in `pnpm-workspace.yaml` as `allowBuilds`
+- **This device used to be 32-bit (armv7l) Raspbian Buster.** It was reflashed to 64-bit specifically
+  to get past a hard ceiling: Buster's `libstdc++6` (gcc 8.3) only provides up to `GLIBCXX_3.4.25`,
+  and Node's official builds need `3.4.26`+ starting at Node 20 — so on the old OS, Node 18 was the
+  real ceiling regardless of architecture-level armv7l availability (verified empirically; see the
+  git history around the "revert: node 22 / pnpm 12 bump" commit on `master` for the full story
+  before this branch was merged). None of that applies anymore: on 64-bit, there's no known Node
+  version ceiling — track current LTS and bump when it moves, same as any normal project.
+- **bun now works here.** The old 32-bit-only limitation (bun ships arm64 builds only) is gone. Not
+  adopted yet — would still need to redo the tsup/build story — but no longer blocked architecturally.
+- **pnpm is on 12.x** via the `packageManager` field. pnpm 11 removed `package.json`'s `pnpm.*`
+  config block entirely — `onlyBuiltDependencies` now lives in `pnpm-workspace.yaml` as `allowBuilds`
   (a name → boolean map, replacing the old array-of-allowed-names shape). `ssh2` / `cpu-features`
-  are set to `false` there, same reasoning as below.
-- Build target is `node22` (`tsup.config.ts`), `engines.node` is `>=22.12`, `.nvmrc` is `22`.
-  `>=22.12` specifically is where `require(esm)` became unflagged, which is why `wretch` (v3,
-  ESM-only) and `p-wait-for` (v6, ESM-only) can be required directly from the cjs bundle again —
-  see git history around "pin p-wait-for and wretch to CJS-compatible versions" for what breaks
-  below that version. `sharp` is unpinned back to `^0.35.4` for the same reason (it needs
-  node >=20.9); `@img/sharp-linux-arm` still ships armv7 prebuilds at that version.
+  are set to `false` there — see below.
+- Build target is `node24` (`tsup.config.ts`), `engines.node` is `>=24`, `.nvmrc` is `24`. `wretch`
+  (v3, ESM-only) and `p-wait-for` (v6, ESM-only) are required directly from the cjs bundle via
+  `require(esm)`, stable since node 22.12 — comfortably covered now. `sharp` is on `^0.35.4`.
 - `ssh2` / `cpu-features` are deliberately set to `false` in `pnpm-workspace.yaml`'s `allowBuilds`:
   optional native speedups that would need a node-gyp toolchain on the pi. The pure JS fallback is
-  used.
-- Native deps that must keep working on armv7: `sharp`, `node-hid`, `@julusian/jpeg-turbo`.
-
-Check any dependency bump against node 22 on armv7l before proposing it.
+  used — this was originally about avoiding a toolchain on the old OS; worth reconsidering now that
+  `build-essential` is installed on the device anyway for other native deps.
+- Native deps that must keep building on aarch64: `sharp`, `node-hid`, `@julusian/jpeg-turbo`.
+- The Elgato Stream Deck Mini needs udev rules granting the `pi` user (via the `plugdev` group)
+  access to the USB HID device — not in this repo, device-specific, see `CLAUDE.local.md`.
 
 ## Commands
 
@@ -49,13 +44,13 @@ Check any dependency bump against node 22 on armv7l before proposing it.
 |-------------------|-----------------------------------------------------|
 | `pnpm install`    | install (uses `pnpm-lock.yaml`)                     |
 | `pnpm start`      | dev: tsup watch + nodemon restart                   |
-| `pnpm build`      | bundle to `dist/index.js` (cjs, target node22)      |
+| `pnpm build`      | bundle to `dist/index.js` (cjs, target node24)      |
 | `pnpm start-prod` | `node dist/index.js` — what production runs         |
 | `pnpm check`      | biome lint + format with autofix                    |
 | `pnpm check-ci`   | `biome ci`, non-mutating (used by CI)               |
 | `pnpm typecheck`  | `tsc --noEmit`                                      |
 
-CI (`.github/workflows/ci.yml`) runs check-ci, typecheck and build on node 22.
+CI (`.github/workflows/ci.yml`) runs check-ci, typecheck and build on node 24.
 
 ## Structure
 

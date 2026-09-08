@@ -1,5 +1,5 @@
 [Unit]
-# systemd unit for the production device (raspberry pi, node 22 via nvm).
+# systemd unit for the production device (raspberry pi, node 24 via nvm).
 # Install: see deploy/README.md
 Description=TeamSpeak Stream Deck viewer
 After=network-online.target
@@ -12,7 +12,7 @@ Group=pi
 WorkingDirectory=/home/pi/streamdeck-ts-viewer
 
 # nvm's bin dir must be on PATH; systemd does not read the user's profile.
-Environment=PATH=/home/pi/.nvm/versions/node/v22.23.2/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PATH=/home/pi/.nvm/versions/node/v24.20.0/bin:/usr/local/bin:/usr/bin:/bin
 
 # node is started directly rather than through `pnpm start-prod`: the pnpm wrapper would stay alive
 # as the parent and costs ~95MB RSS on a 427MB device.

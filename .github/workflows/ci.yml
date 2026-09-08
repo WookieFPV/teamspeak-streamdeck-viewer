@@ -13,8 +13,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
 
-      # node 22 mirrors the raspberry pi that runs this in production (the newest
-      # node version with official armv7l builds; node 24 dropped 32-bit ARM)
+      # node 24 (latest LTS) mirrors the raspberry pi that runs this in production
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
