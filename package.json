@@ -18,21 +18,12 @@
   "author": "Lukas Müller",
   "license": "ISC",
   "engines": {
-    "node": ">=18.12"
+    "node": ">=22.12"
   },
   "overrides": {
     "esbuild": "^0.28.2"
   },
-  "packageManager": "pnpm@10.34.5",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@biomejs/biome",
-      "@julusian/jpeg-turbo",
-      "esbuild",
-      "node-hid",
-      "sharp"
-    ]
-  },
+  "packageManager": "pnpm@12.3.4+sha512.961aa41fb077da3a04a441d9f8e15ebc0c96da8ef710b2eb67bf9ee7cb0610eabd48f1fd85f51cffe73846785fa0f87c56a3a872a1d893f8446741b5cce45457",
   "dependencies": {
     "@elgato-stream-deck/node": "^7.6.3",
     "@julusian/jpeg-turbo": "^3.0.1",
@@ -41,11 +32,11 @@
     "immer": "11.1.18",
     "is-online": "^12.0.2",
     "node-hid": "^3.4.0",
-    "p-wait-for": "^3.2.0",
-    "sharp": "^0.33.5",
+    "p-wait-for": "^6.0.0",
+    "sharp": "^0.35.4",
     "ts3-nodejs-library": "3.5.3",
     "winston": "3.19.0",
-    "wretch": "2.10.0",
+    "wretch": "3.0.9",
     "ws": "^8.21.3",
     "zod": "3.25.76"
   },
