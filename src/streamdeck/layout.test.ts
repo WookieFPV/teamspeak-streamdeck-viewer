@@ -89,35 +89,48 @@ describe("planDeckLayout", () => {
     expect(layout.paints.map((p) => p.client.clid)).toEqual(["2", "5", "9"]);
   });
 
-  test("env nickname overrides win over the built-ins", () => {
+  test("applies the NICKNAME_MAPPING overrides", () => {
     const layout = planDeckLayout([client({ clientNickname: "Alice" })], {
       ...opts,
       nameMapping: { Alice: "Al" },
     });
     expect(layout.paints[0]?.name).toBe("Al");
   });
+
+  test("falls through to the raw nickname without a mapping", () => {
+    const layout = planDeckLayout(
+      [client({ clientNickname: "Some Very Long Nickname" })],
+      opts,
+    );
+    expect(layout.paints[0]?.name).toBe("Some Very Long Nickname");
+  });
 });
 
 describe("getName", () => {
   test("maps known nicknames and passes the rest through", () => {
-    expect(getName(client({ clientNickname: "FK1024 | Felix" }))).toBe("Felix");
+    expect(
+      getName(client({ clientNickname: "Some Very Long Nickname" }), {
+        "Some Very Long Nickname": "Short",
+      }),
+    ).toBe("Short");
     expect(getName(client({ clientNickname: "stranger" }))).toBe("stranger");
   });
 
-  test("explicit mapping overrides the built-ins", () => {
+  test("explicit mapping is the only source of short names", () => {
     expect(
-      getName(client({ clientNickname: "FK1024 | Felix" }), {
-        "FK1024 | Felix": "F",
+      getName(client({ clientNickname: "Some Very Long Nickname" }), {
+        "Some Very Long Nickname": "S",
       }),
-    ).toBe("F");
+    ).toBe("S");
   });
 });
 
 describe("parseNicknameMapping", () => {
   test("parses ;-separated pairs on the first =", () => {
-    expect(
-      parseNicknameMapping("FK1024 | Felix=Felix;N1m4=Nima;broken"),
-    ).toEqual({ "FK1024 | Felix": "Felix", N1m4: "Nima" });
+    expect(parseNicknameMapping("Long Nickname=Short;Bob=B;broken")).toEqual({
+      "Long Nickname": "Short",
+      Bob: "B",
+    });
     expect(parseNicknameMapping(undefined)).toEqual({});
     expect(parseNicknameMapping("")).toEqual({});
   });

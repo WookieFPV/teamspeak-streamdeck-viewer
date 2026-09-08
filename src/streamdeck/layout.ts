@@ -1,10 +1,8 @@
 import type { TeamSpeakClient } from "~/teamspeak/teamspeakTypes";
 
-/** built-in short names; `NICKNAME_MAPPING` env entries override these */
-const defaultNameMapping: Record<string, string> = {
-  "FK1024 | Felix": "Felix",
-  N1m4: "Nima",
-};
+/** Display names come only from `NICKNAME_MAPPING` (see envVars) — nothing
+ * is hardcoded, so no personal data lives in the repo. Absent entries fall
+ * through to the raw TeamSpeak nickname. */
 
 /** parse NICKNAME_MAPPING ("exact nickname=new name;...") into overrides */
 export const parseNicknameMapping = (
@@ -24,7 +22,7 @@ export const parseNicknameMapping = (
 
 export const getName = (
   client: TeamSpeakClient,
-  mapping: Record<string, string> = defaultNameMapping,
+  mapping: Record<string, string> = {},
 ): string => mapping[client.clientNickname] ?? client.clientNickname;
 
 export interface DeckLayoutOptions {
@@ -37,7 +35,7 @@ export interface DeckLayoutOptions {
   /** minutes of inactivity after which the afk badge appears */
   minIdleTimeMins: number;
   now: number;
-  /** nickname overrides (from NICKNAME_MAPPING); merged over the built-ins */
+  /** nickname overrides (from NICKNAME_MAPPING) */
   nameMapping?: Record<string, string>;
 }
 
@@ -82,8 +80,8 @@ export const planDeckLayout = (
       ? clientsRaw.filter((c) => c.cid === mainUser.cid)
       : [...clientsRaw]
   ).sort((a, b) => Number(a.clid) - Number(b.clid));
-  // env overrides merge over (not replace) the built-in short names
-  const mapping = { ...defaultNameMapping, ...opts.nameMapping };
+  // only source of short names is the NICKNAME_MAPPING env var
+  const mapping = opts.nameMapping ?? {};
 
   // the clock lives on the last row of keys, but only while enough keys are free
   const showClock =

@@ -13,12 +13,12 @@ describe("escapeXml", () => {
 describe("buildKeySvg", () => {
   test("embeds name, sub text and font sizes", () => {
     const svg = buildKeySvg({
-      name: "Felix",
+      name: "Alice",
       subText: "7m",
       pixelSize: 80,
       fonts,
     });
-    expect(svg).toContain("Felix");
+    expect(svg).toContain("Alice");
     expect(svg).toContain("7m");
     expect(svg).toContain('font-size="16px"');
     expect(svg).toContain('font-size="14px"');

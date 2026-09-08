@@ -37,7 +37,7 @@ const baseEnvSchema = z.object({
   STREAMDECK_AFK_FONTSIZE: fontSizeSchema.optional(),
   // optional display-name overrides, ";"-separated "exact nickname=new name"
   // pairs, split on the first "=" so nicknames may contain "|" or ",".
-  // e.g. NICKNAME_MAPPING="FK1024 | Felix=Felix;N1m4=Nima"
+  // e.g. NICKNAME_MAPPING="Some Very Long Nickname=Short;Bob=B"
   NICKNAME_MAPPING: z.string().optional(),
   // explicit device selector: when several decks are (or were) plugged in,
   // `listStreamDecks()[0]` order is arbitrary and can flip across re-plugs.

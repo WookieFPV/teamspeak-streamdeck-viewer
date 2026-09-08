@@ -4,7 +4,7 @@ import { parseWsEvent, stringifyWsEvent } from "./WsEvent";
 const client = {
   clid: "1",
   cid: "5",
-  clientNickname: "Felix",
+  clientNickname: "Alice",
   clientType: 0,
   clientAway: false,
   clientFlagTalking: true,
