@@ -1,41 +1,43 @@
 import type { StreamDeck } from "@elgato-stream-deck/node";
 import { config } from "~/config";
+import type { Colors } from "./colors";
 import { getCornerButtonIndex } from "./controlLayout";
-import { streamDeckPaint } from "./paintStreamdeck";
+import { drawClock, streamDeckPaint } from "./paintStreamdeck";
 
-/** short labels only - these get squeezed onto an 80x80px key alongside every other one during startup */
-export type StartupStatus = "starting" | "network" | "connecting" | "ready";
-
-/** takes over every key to show startup progress. Only safe to call before
- * the main loop starts drawing clients - once real key content exists this
- * would overwrite it. */
-export const paintStartupStatus = async (
+/**
+ * Shows a single-tile status message (top-left) instead of client data, for
+ * the two situations where there is no trustworthy client list to draw: still
+ * booting/connecting, or the last fetch failed. The clock keeps its usual
+ * spot next to it since it doesn't depend on backend data; every other key
+ * is cleared rather than left showing whatever client data was there before.
+ */
+export const paintStatusScreen = async (
   streamDeck: StreamDeck,
-  status: StartupStatus,
+  label: string,
+  color: Colors,
 ) => {
-  const buttons = streamDeck.CONTROLS.filter((c) => c.type === "button");
-  await Promise.all(
-    buttons.map((c) =>
-      streamDeckPaint(streamDeck, c.index, status, "black", ""),
-    ),
-  );
-};
+  const buttons = streamDeck.CONTROLS.filter((c) => c.type === "button")
+    .map((c) => c.index)
+    .sort((a, b) => a - b);
+  const statusIndex = getCornerButtonIndex(streamDeck, "top-left");
+  if (statusIndex === undefined) return;
 
-let lastSuccessAt: number | undefined;
+  await streamDeckPaint(streamDeck, statusIndex, label, color, "");
 
-/** call once per successful client fetch+draw, from whichever backend/path triggered it */
-export const markClientsDrawn = () => {
-  lastSuccessAt = Date.now();
-};
+  const clockKeys = buttons.slice(-config.clockKeyCount);
+  const [clockKey1, clockKey2, clockKey3] = clockKeys;
 
-const isStale = (): boolean =>
-  lastSuccessAt === undefined ||
-  Date.now() - lastSuccessAt > config.statusStaleAfterMs;
+  for (const index of buttons) {
+    if (index === statusIndex || clockKeys.includes(index)) continue;
+    await streamDeck.clearKey(index);
+  }
 
-/** repaints the small always-reserved top-left key: blue while data is
- * fresh, red once nothing has been fetched successfully in a while. */
-export const paintStatusKey = async (streamDeck: StreamDeck) => {
-  const index = getCornerButtonIndex(streamDeck, "top-left");
-  if (index === undefined) return;
-  await streamDeckPaint(streamDeck, index, "", isStale() ? "red" : "blue", "");
+  if (
+    clockKey1 !== undefined &&
+    clockKey2 !== undefined &&
+    clockKey3 !== undefined &&
+    clockKey1 !== statusIndex
+  ) {
+    await drawClock(streamDeck, [clockKey1, clockKey2, clockKey3]);
+  }
 };

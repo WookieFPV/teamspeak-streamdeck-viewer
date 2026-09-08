@@ -1,7 +1,7 @@
 import { config } from "~/config";
 import { envVars } from "~/envVars";
 import { getStreamdeck } from "~/streamdeck/getStreamdeck";
-import { paintStartupStatus, paintStatusKey } from "~/streamdeck/status";
+import { paintStatusScreen } from "~/streamdeck/status";
 import { getTsBackend } from "~/teamspeak/BackendFactory";
 import { TsDrawClients } from "~/teamspeak/tsDrawClients";
 import { getPollingDelay } from "~/teamspeak/tsHelper";
@@ -11,16 +11,16 @@ import { logger } from "~/utils/logger";
 const runTsViewer = async () => {
   logger.info("run runTsViewer");
   // the deck itself is the very first thing brought up, so startup progress
-  // can be shown on it as early as possible
+  // can be shown on it as early as possible - just one status tile plus the
+  // clock, since there is no client data to show yet
   const streamDeck = await getStreamdeck();
-  await paintStartupStatus(streamDeck, "starting");
+  await paintStatusScreen(streamDeck, "start", "black");
 
-  await paintStartupStatus(streamDeck, "network");
+  await paintStatusScreen(streamDeck, "net", "black");
   await waitForNetwork();
 
-  await paintStartupStatus(streamDeck, "connecting");
+  await paintStatusScreen(streamDeck, "ts3", "black");
   const TsBackend = getTsBackend(envVars);
-  await paintStartupStatus(streamDeck, "ready");
 
   while (true) {
     try {
@@ -31,7 +31,10 @@ const runTsViewer = async () => {
     } catch (err) {
       logger.info("err in main loop");
       logger.warn(err);
-      await paintStatusKey(streamDeck);
+      // a failed fetch means there is no trustworthy client list right now,
+      // so replace whatever was on screen with an explicit error instead of
+      // leaving stale client data showing
+      await paintStatusScreen(streamDeck, "err", "red");
       await wait(config.idleTimeError);
     }
   }

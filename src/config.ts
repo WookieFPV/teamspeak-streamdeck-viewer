@@ -22,11 +22,4 @@ export const config = {
   clockKeyCount: 3,
   // only show the clock while at most this many clients are on the deck
   maxClientsWithClock: 3,
-
-  // how long the top-left status key can go without a successful client
-  // fetch before it flips from "ok" to "stale". A real broken connection
-  // surfaces as thrown errors (see the main loop's catch block), which is
-  // much faster than this - this threshold is just a backstop so the key
-  // doesn't flicker red on a single slow poll.
-  statusStaleAfterMs: 30 * 1000,
 };

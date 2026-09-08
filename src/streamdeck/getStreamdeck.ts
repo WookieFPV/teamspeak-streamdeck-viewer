@@ -3,6 +3,7 @@ import { listStreamDecks, openStreamDeck } from "@elgato-stream-deck/node";
 import { queryClient, queryKey } from "~/teamspeak/queryClient";
 import { logger } from "~/utils/logger";
 import { getCornerButtonIndex } from "./controlLayout";
+import { paintStatusScreen } from "./status";
 
 export const getStreamdeck = () =>
   queryClient.fetchQuery({
@@ -36,11 +37,14 @@ const registerRestartButton = (streamDeck: StreamDeck) => {
   const restartIndex = getCornerButtonIndex(streamDeck, "bottom-right");
   if (restartIndex === undefined) return;
 
-  streamDeck.on("down", (control) => {
+  streamDeck.on("down", async (control) => {
     if (control.type !== "button" || control.index !== restartIndex) return;
     logger.warn(
       "restart button pressed, exiting so systemd restarts the service",
     );
+    // let the user see it's actually doing something before the deck goes
+    // dark for the ~10s it takes systemd to bring the process back up
+    await paintStatusScreen(streamDeck, "restart", "orange");
     process.exit(1);
   });
 };
