@@ -15,12 +15,15 @@ const runTsViewer = async () => {
   // can be shown on it as early as possible - just one status tile plus the
   // clock, since there is no client data to show yet
   const streamDeck = await getStreamdeck();
-  await paintStatusScreen(streamDeck, "start", "black");
+  const bootSteps = 3;
+  await paintStatusScreen(streamDeck, "deck", "black", `1/${bootSteps}`);
 
-  await paintStatusScreen(streamDeck, "net", "black");
+  await paintStatusScreen(streamDeck, "network", "black", `2/${bootSteps}`);
   await waitForNetwork();
 
-  await paintStatusScreen(streamDeck, "ts3", "black");
+  // short label to fit the key - mirrors the [TS]/[WS] log prefixes used by each backend
+  const backendLabel = envVars.BACKEND_TYPE === "customApi" ? "api" : "ts3";
+  await paintStatusScreen(streamDeck, backendLabel, "black", `3/${bootSteps}`);
   const TsBackend = getTsBackend(envVars);
 
   while (true) {

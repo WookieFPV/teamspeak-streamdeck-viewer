@@ -15,6 +15,7 @@ export const paintStatusScreen = async (
   streamDeck: StreamDeck,
   label: string,
   color: Colors,
+  subText = "",
 ) => {
   const buttons = streamDeck.CONTROLS.filter((c) => c.type === "button")
     .map((c) => c.index)
@@ -22,7 +23,7 @@ export const paintStatusScreen = async (
   const statusIndex = getCornerButtonIndex(streamDeck, "top-left");
   if (statusIndex === undefined) return;
 
-  await streamDeckPaint(streamDeck, statusIndex, label, color, "");
+  await streamDeckPaint(streamDeck, statusIndex, label, color, subText);
 
   const clockKeys = buttons.slice(-config.clockKeyCount);
   const [clockKey1, clockKey2, clockKey3] = clockKeys;
