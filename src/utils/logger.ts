@@ -1,11 +1,13 @@
 import { createLogger, format, transports } from "winston";
 
+// format.splat() applies util.format to multi-arg calls like
+// logger.info("join", nickname, json): without it winston's printf only
+// saw the first arg and silently dropped the rest.
 const formatWithTime = format.printf(
-  ({ level, message }) =>
-    `[${new Date().toLocaleTimeString()}] ${level}: ${message}`,
+  ({ level, message, timestamp }) => `[${timestamp}] ${level}: ${message}`,
 );
 
 export const logger = createLogger({
-  format: formatWithTime,
-  transports: [new transports.Console({ format: format.timestamp() })],
+  format: format.combine(format.timestamp(), format.splat(), formatWithTime),
+  transports: [new transports.Console()],
 });

@@ -9,7 +9,6 @@
         "@julusian/jpeg-turbo": "^3.0.1",
         "@tanstack/query-core": "5.102.8",
         "dotenv": "17.4.2",
-        "immer": "11.1.18",
         "is-online": "^12.0.2",
         "node-hid": "^3.4.0",
         "p-wait-for": "^6.0.0",
@@ -239,8 +238,6 @@
     "http-cache-semantics": ["http-cache-semantics@4.2.0", "", {}, "sha512-dTxcvPXqPvXBQpq5dUr6mEMJX4oIEFv6bwom3FDwKRDsuIjjJGANqhBuoAn9c1RQJIdAKav33ED65E2ys+87QQ=="],
 
     "http2-wrapper": ["http2-wrapper@2.2.1", "", { "dependencies": { "quick-lru": "^5.1.1", "resolve-alpn": "^1.2.0" } }, "sha512-V5nVw1PAOgfI3Lmeaj2Exmeg7fenjhRUgz1lPSezy1CuhPYbgQtbQj4jZfEAEMlaL+vupsvhjqCyjzob0yxsmQ=="],
-
-    "immer": ["immer@11.1.18", "", {}, "sha512-EQyQtLiYW029lyoczMl/Hh4Xu7cDecSc58JRYpHyL4tIAu3eqd1yJzQX04d2BZHDkzFFvm6qJEJWOtfDSWAXbQ=="],
 
     "indent-string": ["indent-string@5.0.0", "", {}, "sha512-m6FAo/spmsW2Ab2fU35JTYwtOKa2yAwXSwgjSv1TJzh4Mh7mC3lzAOVLBprb72XsTrgkEIsl7YrFNAiDiRhIGg=="],
 

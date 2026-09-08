@@ -56,31 +56,36 @@ export const streamDeckPaint = async (
   subText: string,
 ) => {
   try {
+    const size = keyPixelSize(streamDeck, index);
     const finalBuffer = await sharp(
       path.resolve(process.cwd(), "assets", `${color}.png`),
     )
       .composite([
         {
           input: Buffer.from(
-            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${keyPixelSize(streamDeck, index)} ${keyPixelSize(streamDeck, index)}">
+            // coordinates are relative to the key resolution: the old
+            // hardcoded x=40/y=40/y=60 only fit an 80px key. Text is XML-
+            // escaped because nicknames may contain &<>"' which would
+            // otherwise break the SVG (or leak markup into the render).
+            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">
               <text
                 font-family="${fontSettings.user.family}"
                 font-size="${fontSettings.user.size}"
                 font-weight="bold"
-                x="40"
-                y="40"
+                x="${size / 2}"
+                y="${size * 0.5}"
                 fill="#fff"
                 text-anchor="middle"
-              >${name}
+              >${escapeXml(name)}
               </text>
               <text
                 font-family="${fontSettings.afk.family}"
                 font-size="${fontSettings.afk.size}"
-                x="40"
-                y="60"
+                x="${size / 2}"
+                y="${size * 0.75}"
                 fill="#fff"
                 text-anchor="middle"
-              >${subText}
+              >${escapeXml(subText)}
               </text>
             </svg>`,
           ),
@@ -88,7 +93,9 @@ export const streamDeckPaint = async (
           left: 0,
         },
       ])
-      .flatten()
+      // ensureAlpha (not flatten): fillKeyBuffer with { format: "rgba" }
+      // needs 4 channels per pixel, flatten would drop alpha down to 3.
+      .ensureAlpha()
       .raw()
       .toBuffer();
     await streamDeck.fillKeyBuffer(index, finalBuffer, { format: "rgba" });
@@ -96,6 +103,15 @@ export const streamDeckPaint = async (
     logger.error(error);
   }
 };
+
+/** minimal XML escaper for text interpolated into the key SVG */
+export const escapeXml = (s: string): string =>
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 export const drawClock = async (
   streamDeck: StreamDeck,
   keyIndices: readonly [number, number, number],
@@ -118,13 +134,14 @@ const renderChar = async (
   char: string,
   index: number,
 ) => {
+  const size = keyPixelSize(streamDeck, index);
   const finalBuffer = await sharp(
     path.resolve(process.cwd(), "assets", "black.png"),
   )
     .composite([
       {
         input: Buffer.from(
-          `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${keyPixelSize(streamDeck, index)} ${keyPixelSize(streamDeck, index)}">
+          `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">
               <text
                 font-family="${fontSettings.user.family}"
                 font-size="50px"
@@ -133,7 +150,7 @@ const renderChar = async (
                 dy="75%"
                 fill="#fff"
                 text-anchor="middle"
-              >${char}
+              >${escapeXml(char)}
               </text>
             </svg>`,
         ),
@@ -141,7 +158,7 @@ const renderChar = async (
         left: 0,
       },
     ])
-    .flatten()
+    .ensureAlpha()
     .raw()
     .toBuffer();
   return streamDeck.fillKeyBuffer(index, finalBuffer, { format: "rgba" });

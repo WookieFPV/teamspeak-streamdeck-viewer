@@ -1,13 +1,12 @@
 import type { Wretch } from "wretch";
 import { addLastActiveTime } from "~/teamspeak/addLastActiveTime";
-import { hoursToMs, sToMs } from "~/utils/dateHelpers";
+import { hoursToMs } from "~/utils/dateHelpers";
 import { logger } from "~/utils/logger";
 import { queryClient, queryKey } from "../queryClient";
 import type { TeamSpeakClient } from "../teamspeakTypes";
-import { isMainUser } from "../tsHelper";
 
 export const getClientsQuery = (
-  { forceRefresh }: { forceRefresh?: boolean },
+  _args: { forceRefresh?: boolean },
   wretch: Wretch,
 ) =>
   queryClient.fetchQuery<TeamSpeakClient[]>({
@@ -18,10 +17,11 @@ export const getClientsQuery = (
       logger.debug(JSON.stringify(clients.map((c) => `${c.clientNickname}`)));
       return addLastActiveTime(clients, Date.now());
     },
-    staleTime: ({ state: { data = [] } }) => {
-      if (forceRefresh) return 0;
-      if (data.find(isMainUser)) return 0;
-      return sToMs(60);
-    },
+    // Always fetch fresh when explicitly asked: the main loop's polling
+    // delay plus the websocket events are the throttle. A long staleTime
+    // here used to make polling return cached data (up to 60s old, so the
+    // talking indicator lagged) while still sleeping between polls.
+    // `forceRefresh` is kept for API compatibility (every call is a refresh).
+    staleTime: 0,
     gcTime: hoursToMs(1),
   });

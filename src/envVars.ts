@@ -11,6 +11,10 @@ const baseEnvSchema = z.object({
   STREAMDECK_FONT: z.string().optional(),
   STREAMDECK_USER_FONTSIZE: z.string().optional(),
   STREAMDECK_AFK_FONTSIZE: z.string().optional(),
+  // optional display-name overrides, ";"-separated "exact nickname=new name"
+  // pairs, split on the first "=" so nicknames may contain "|" or ",".
+  // e.g. NICKNAME_MAPPING="FK1024 | Felix=Felix;N1m4=Nima"
+  NICKNAME_MAPPING: z.string().optional(),
 });
 
 const tsApiTs3 = z

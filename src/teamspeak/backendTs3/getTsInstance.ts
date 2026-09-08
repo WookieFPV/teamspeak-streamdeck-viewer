@@ -1,9 +1,8 @@
 import { QueryProtocol, TeamSpeak } from "ts3-nodejs-library";
 import type { TsApiTs3 } from "~/envVars";
 import { logger } from "~/utils/logger";
+import { requestRefresh } from "~/utils/refreshTrigger";
 import { queryClient, queryKey } from "../queryClient";
-import { TsDrawClients } from "../tsDrawClients";
-import { filterAndMapTs3Clients } from "./ts3ClientMapper";
 
 const tsConnect = async (vars: TsApiTs3) => {
   logger.info(`[TS] connect (${vars.TS3_HOST})`);
@@ -30,31 +29,24 @@ const tsConnect = async (vars: TsApiTs3) => {
   });
   ts.on("clientconnect", (e) => {
     logger.info(`[TS] clientconnect: ${e.client.nickname}`);
-    queryClient.removeQueries({ queryKey: queryKey.clients });
-    ts.clientList()
-      .then((rawClients) => {
-        TsDrawClients(filterAndMapTs3Clients(rawClients)).catch(logger.warn);
-      })
-      .catch(logger.warn);
+    // Only invalidate + wake: the main loop in `index.ts` is the sole
+    // painter and repaints immediately on wake. Painting directly from here
+    // used to race the main loop (two concurrent `TsDrawClients` runs with
+    // no ordering guarantee, keys flashing mixed old/new state).
+    queryClient.invalidateQueries({ queryKey: queryKey.clients });
+    requestRefresh();
   });
   ts.on("clientdisconnect", (e) => {
     if (!e.client) return logger.info("ts3 clientdisconnect: without Client");
 
     logger.info(`[TS] clientdisconnect: ${e.client.nickname}`);
-    ts.clientList()
-      .then((rawClients) => {
-        TsDrawClients(filterAndMapTs3Clients(rawClients)).catch(logger.warn);
-      })
-      .catch(logger.warn);
+    queryClient.invalidateQueries({ queryKey: queryKey.clients });
+    requestRefresh();
   });
   ts.on("clientmoved", (e) => {
     logger.info(`[TS] clientmoved: ${e.client.nickname}`);
-    queryClient.removeQueries({ queryKey: queryKey.clients });
-    ts.clientList()
-      .then((rawClients) => {
-        TsDrawClients(filterAndMapTs3Clients(rawClients)).catch(logger.warn);
-      })
-      .catch(logger.warn);
+    queryClient.invalidateQueries({ queryKey: queryKey.clients });
+    requestRefresh();
   });
 
   logger.info("ts Connected");

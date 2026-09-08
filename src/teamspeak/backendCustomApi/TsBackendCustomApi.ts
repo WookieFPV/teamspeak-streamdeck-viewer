@@ -2,13 +2,11 @@ import wretch, { type Wretch } from "wretch";
 import WebSocket from "ws";
 import { config } from "~/config";
 import type { TsApiCustom } from "~/envVars";
-import { isShuttingDown } from "~/streamdeck/shutdown";
 import { logger } from "~/utils/logger";
-import { addLastActiveTime } from "../addLastActiveTime";
+import { requestRefresh } from "~/utils/refreshTrigger";
 import type { TsBackend } from "../BackendFactory";
 import { queryClient, queryKey } from "../queryClient";
 import { clientType, type TeamSpeakClient } from "../teamspeakTypes";
-import { TsDrawClients } from "../tsDrawClients";
 import { getClientsQuery } from "./tsCustomApi";
 import type { TsWsEvent } from "./WsEvent";
 
@@ -69,7 +67,7 @@ export class TsBackendCustomApi implements TsBackend {
       // We were not listening while the socket was down, so anything that
       // happened in the meantime was missed. Without this refresh the deck
       // keeps showing whatever it had before the connection dropped.
-      void this.resync("websocket (re)connected");
+      this.resync("websocket (re)connected");
     };
 
     socket.onerror = (error) => {
@@ -191,7 +189,7 @@ export class TsBackendCustomApi implements TsBackend {
         logger.info(
           `[WS] api server reconnected to teamspeak (${event.repaired} repaired event(s))`,
         );
-        void this.resync("api server reconnected to teamspeak");
+        this.resync("api server reconnected to teamspeak");
         break;
       case "heartbeat":
         this.heartbeatSeen = true;
@@ -204,35 +202,33 @@ export class TsBackendCustomApi implements TsBackend {
     }
   }
 
+  /**
+   * Every websocket event funnels through here: invalidate the cache and
+   * wake the main loop, which refetches and repaints immediately. The
+   * backend never paints directly, so there is exactly one painter and
+   * concurrent paints can't interleave.
+   */
+  private triggerRefresh(reason: string) {
+    logger.info(`[WS] refresh: ${reason}`);
+    queryClient.invalidateQueries({ queryKey: queryKey.clients });
+    requestRefresh();
+  }
+
   /** throws away the cached list and repaints from the api */
-  private async resync(reason: string) {
-    logger.info(`[WS] resync: ${reason}`);
-    await this.refreshAndDrawClients();
+  private resync(reason: string) {
+    this.triggerRefresh(reason);
   }
 
   private handleClientConnect(client: TeamSpeakClient | undefined) {
     if (!client || client.clientType !== clientType.normalUser) return;
     logger.info(`[WS]: Client connect: ${client.clientNickname}`);
-    this.updateClientList((oldData) => {
-      const others = (oldData || []).filter(
-        (c) => c.clientUniqueIdentifier !== client.clientUniqueIdentifier,
-      );
-      // clientLastActiveTime is added by the api query, an event does not have
-      // it - without it the key would render an idle time of NaN
-      return [...others, ...addLastActiveTime([client], Date.now())];
-    });
-    this.refreshAndDrawClients();
+    this.triggerRefresh(`client connect: ${client.clientNickname}`);
   }
 
   private handleClientDisconnect(client: TeamSpeakClient | undefined) {
     if (!client || client.clientType !== clientType.normalUser) return;
     logger.info(`[WS]: Client disconnect: ${client.clientNickname}`);
-    this.updateClientList((oldData) =>
-      (oldData || []).filter(
-        (c) => c.clientUniqueIdentifier !== client.clientUniqueIdentifier,
-      ),
-    );
-    this.refreshAndDrawClients();
+    this.triggerRefresh(`client disconnect: ${client.clientNickname}`);
   }
 
   private handleClientMoved(
@@ -242,23 +238,7 @@ export class TsBackendCustomApi implements TsBackend {
     logger.info(
       `[WS]: Client moved: ${client.clientNickname} [${channel.channelName}]`,
     );
-    this.refreshAndDrawClients();
-  }
-
-  private updateClientList(
-    updater: (oldData: TeamSpeakClient[] | undefined) => TeamSpeakClient[],
-  ) {
-    queryClient.setQueryData<TeamSpeakClient[]>(queryKey.clients, updater);
-  }
-
-  private async refreshAndDrawClients() {
-    try {
-      const clients = await this.getClients({ forceRefresh: true });
-      if (isShuttingDown()) return;
-      await TsDrawClients(clients);
-    } catch (error) {
-      logger.warn("Error refreshing clients:", error);
-    }
+    this.triggerRefresh(`client moved: ${client.clientNickname}`);
   }
 
   async getClients(args: {

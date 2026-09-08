@@ -10,9 +10,12 @@ export const TsDrawClients = async (
   const streamDeck = await getStreamdeck();
   const numKeys = streamDeck.CONTROLS.filter((c) => c.type === "button").length;
   const mainUser = clientsRaw.find(isMainUser);
-  const clients = clientsRaw.filter(
-    (c) => !mainUser || c.cid === mainUser?.cid,
-  );
+  // Sort by clid (server-assigned, join order): server list order is not
+  // guaranteed stable across polls, and without this keys reshuffle
+  // whenever the backend returns a different order.
+  const clients = clientsRaw
+    .filter((c) => !mainUser || c.cid === mainUser?.cid)
+    .sort((a, b) => Number(a.clid) - Number(b.clid));
 
   // the clock lives on the last row of keys, but only while enough keys are free
   const showClock =
@@ -21,10 +24,9 @@ export const TsDrawClients = async (
   const clockStart = numKeys - config.clockKeyCount;
   const clientKeys = showClock ? clockStart : numKeys;
 
-  for (const client of clients) {
-    const i = clients.indexOf(client);
-    if (i >= clientKeys) continue;
-
+  for (let i = 0; i < clients.length && i < clientKeys; i++) {
+    const client = clients[i];
+    if (!client) continue;
     const clientIdleTime = Date.now() - client.clientLastActiveTime;
 
     const idleTimeMins = Math.floor(clientIdleTime / 1000 / 60);

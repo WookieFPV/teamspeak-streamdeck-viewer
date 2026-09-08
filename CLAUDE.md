@@ -74,7 +74,9 @@ CI (`.github/workflows/ci.yml`) runs check-ci, typecheck and build on bun.
 
 Entry point is `src/index.ts`: get the Stream Deck, wait for network, build a backend, then loop
 forever — fetch clients, draw them, sleep for a backend-dependent delay, and swallow/log errors so
-the process never dies.
+the process never dies. The sleep is interruptible (`waitForRefresh` in `src/utils/refreshTrigger.ts`):
+backend events (TS3 notifications, websocket messages) call `requestRefresh()` so the loop refetches
+and repaints immediately instead of waiting out the full delay; the main loop is the sole painter.
 
 - `src/envVars.ts` — all config comes from `.env` (loaded with dotenv) and is validated by a zod
   discriminated union on `BACKEND_TYPE`. Invalid env logs and throws at import time.
