@@ -1,17 +1,16 @@
 import type { StreamDeck } from "@elgato-stream-deck/node";
 import { listStreamDecks, openStreamDeck } from "@elgato-stream-deck/node";
-import { queryClient, queryKey } from "~/teamspeak/queryClient";
 import { logger } from "~/utils/logger";
+import { Store } from "~/utils/store";
 import { getCornerButtonIndex } from "./controlLayout";
 import { markShuttingDown } from "./shutdown";
 import { paintStatusScreen } from "./status";
 
-export const getStreamdeck = () =>
-  queryClient.fetchQuery({
-    queryKey: queryKey.streamDeck,
-    queryFn: () => streamDeckConnect(),
-    staleTime: Number.POSITIVE_INFINITY,
-    gcTime: Number.POSITIVE_INFINITY,
+const deckStore = new Store<StreamDeck>();
+
+export const getStreamdeck = (): Promise<StreamDeck> =>
+  deckStore.fetch(() => streamDeckConnect(), {
+    staleMs: Number.POSITIVE_INFINITY,
   });
 
 const streamDeckConnect = async () => {
@@ -21,7 +20,7 @@ const streamDeckConnect = async () => {
 
   streamDeck.on("error", (error: unknown) => {
     logger.error(error);
-    queryClient.removeQueries({ queryKey: queryKey.streamDeck });
+    deckStore.invalidate();
   });
 
   registerRestartButton(streamDeck);

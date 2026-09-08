@@ -2,7 +2,7 @@ import type { StreamDeck } from "@elgato-stream-deck/node";
 import { config } from "~/config";
 import type { Colors } from "./colors";
 import { getCornerButtonIndex } from "./controlLayout";
-import { drawClock, streamDeckPaint } from "./paintStreamdeck";
+import { buttonIndices, clearKeys, drawClock, paintKey } from "./deck";
 
 /**
  * Shows a single-tile status message (top-left) instead of client data, for
@@ -17,21 +17,21 @@ export const paintStatusScreen = async (
   color: Colors,
   subText = "",
 ) => {
-  const buttons = streamDeck.CONTROLS.filter((c) => c.type === "button")
-    .map((c) => c.index)
-    .sort((a, b) => a - b);
+  const buttons = buttonIndices(streamDeck);
   const statusIndex = getCornerButtonIndex(streamDeck, "top-left");
   if (statusIndex === undefined) return;
 
-  await streamDeckPaint(streamDeck, statusIndex, label, color, subText);
+  await paintKey(streamDeck, statusIndex, { label, color, subText });
 
   const clockKeys = buttons.slice(-config.clockKeyCount);
   const [clockKey1, clockKey2, clockKey3] = clockKeys;
 
-  for (const index of buttons) {
-    if (index === statusIndex || clockKeys.includes(index)) continue;
-    await streamDeck.clearKey(index);
-  }
+  await clearKeys(
+    streamDeck,
+    buttons.filter(
+      (index) => index !== statusIndex && !clockKeys.includes(index),
+    ),
+  );
 
   if (
     clockKey1 !== undefined &&

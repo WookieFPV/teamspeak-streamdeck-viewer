@@ -1,19 +1,24 @@
-import type { TsApiTs3 } from "~/envVars";
+import type { TeamSpeak } from "ts3-nodejs-library";
+import type { EnvVars } from "~/envVars";
+import { isShuttingDown } from "~/streamdeck/shutdown";
 import { daysToMs } from "~/utils/dateHelpers";
 import { logger } from "~/utils/logger";
+import { Store } from "~/utils/store";
 import type { TsBackend } from "../BackendFactory";
-import { queryClient, queryKey } from "../queryClient";
 import type { TeamSpeakClient } from "../teamspeakTypes";
+import { TsDrawClients } from "../tsDrawClients";
 import { isMainUser } from "../tsHelper";
-import { getTsInstance } from "./getTsInstance";
+import { connectTs } from "./getTsInstance";
 import { filterAndMapTs3Clients } from "./ts3ClientMapper";
 
 export class TsBackendTsApi implements TsBackend {
-  vars: TsApiTs3;
+  private readonly tsStore = new Store<TeamSpeak>();
+  private readonly clientStore = new Store<TeamSpeakClient[]>();
 
-  constructor(vars: TsApiTs3) {
+  constructor(
+    private readonly vars: Extract<EnvVars, { BACKEND_TYPE: "ts3" }>,
+  ) {
     logger.info("BACKEND_TYPE: TS3");
-    this.vars = vars;
   }
 
   async getClients({
@@ -21,22 +26,40 @@ export class TsBackendTsApi implements TsBackend {
   }: {
     forceRefresh?: boolean;
   } = {}): Promise<TeamSpeakClient[]> {
-    const ts = await getTsInstance(this.vars);
-    return queryClient.fetchQuery<TeamSpeakClient[]>({
-      queryKey: queryKey.clients,
-      queryFn: async () => {
+    const ts = await this.tsStore.fetch(
+      () =>
+        connectTs(this.vars, {
+          onConnectionLost: () => this.tsStore.invalidate(),
+          onClientsChanged: () => {
+            this.clientStore.invalidate();
+            void this.refreshAndDrawClients();
+          },
+        }),
+      { staleMs: Number.POSITIVE_INFINITY },
+    );
+    // while the main user is around every poll is fresh; otherwise the list
+    // barely changes, so a long cache keeps the query connection quiet
+    const cached = this.clientStore.get();
+    const staleMs = forceRefresh || cached?.find(isMainUser) ? 0 : daysToMs(1);
+    return this.clientStore.fetch(
+      async () => {
         logger.info("TS3 API clientList:");
         const rawClients = await ts.clientList();
         const clients = filterAndMapTs3Clients(rawClients);
         logger.info(JSON.stringify(clients.map((c) => c.clientNickname)));
         return clients;
       },
-      staleTime: ({ state: { data = [] } }) => {
-        if (forceRefresh) return 0;
-        if (data.find(isMainUser)) return 0;
-        return daysToMs(1);
-      },
-      gcTime: daysToMs(1),
-    });
+      { forceRefresh, staleMs },
+    );
+  }
+
+  private async refreshAndDrawClients() {
+    try {
+      const clients = await this.getClients({ forceRefresh: true });
+      if (isShuttingDown()) return;
+      await TsDrawClients(clients);
+    } catch (error) {
+      logger.warn("Error refreshing clients:", error);
+    }
   }
 }

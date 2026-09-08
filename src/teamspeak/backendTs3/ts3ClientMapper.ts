@@ -11,7 +11,6 @@ const ts3ClientMapper = (client: TeamSpeakClientTS3): TeamSpeakClient => ({
   clientFlagTalking: client.flagTalking,
   clientInputMuted: client.inputMuted,
   clientOutputMuted: client.outputMuted,
-  connectionClientIp: client.connectionClientIp,
   clientIdleTime: client.idleTime,
   clientLastActiveTime: Date.now() - client.idleTime,
 });
