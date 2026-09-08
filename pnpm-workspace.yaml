@@ -1,0 +1,10 @@
+allowBuilds:
+  '@biomejs/biome': true
+  '@julusian/jpeg-turbo': true
+  esbuild: true
+  node-hid: true
+  sharp: true
+  # left out deliberately: optional native speedups that would need a node-gyp
+  # toolchain on the pi. The pure JS fallback is used instead.
+  cpu-features: false
+  ssh2: false

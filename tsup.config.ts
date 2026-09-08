@@ -3,8 +3,7 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: ["src/index.ts"],
   format: ["cjs"],
-  // the raspberry pi runs an older node, keep the output compatible
-  target: "node18",
+  target: "node24",
   outDir: "dist",
   clean: true,
   // is-online is ESM-only since v12; bundle it so the cjs output does not
