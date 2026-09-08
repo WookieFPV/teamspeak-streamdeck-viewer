@@ -1,18 +1,27 @@
-import wretch, { type Wretch } from "wretch";
-import WebSocket from "ws";
 import { config } from "~/config";
 import type { TsApiCustom } from "~/envVars";
 import { logger } from "~/utils/logger";
 import { requestRefresh } from "~/utils/refreshTrigger";
 import type { TsBackend } from "../BackendFactory";
-import { queryClient, queryKey } from "../queryClient";
 import { clientType, type TeamSpeakClient } from "../teamspeakTypes";
-import { getClientsQuery } from "./tsCustomApi";
-import type { TsWsEvent } from "./WsEvent";
+import { CustomApiClient } from "./tsCustomApi";
+import { parseWsEvent, type TsWsEvent } from "./WsEvent";
+
+/**
+ * The WHATWG `WebSocket` (bun and node both ship it) cannot send custom
+ * handshake headers, so the bearer token goes as an `access_token` query
+ * parameter instead of the `Authorization` header the old `ws` client used.
+ * The api server must accept query-param auth for the socket to connect.
+ */
+const wsUrlWithToken = (base: string, token: string): string => {
+  const url = new URL(base);
+  url.searchParams.set("access_token", token);
+  return url.toString();
+};
 
 export class TsBackendCustomApi implements TsBackend {
-  private readonly vars: TsApiCustom;
-  private readonly wretch: Wretch;
+  private readonly api: CustomApiClient;
+  private readonly wsUrl: string;
   private socket: WebSocket | undefined;
   /**
    * Incremented for every socket we create. Handlers of a superseded socket
@@ -29,10 +38,11 @@ export class TsBackendCustomApi implements TsBackend {
 
   constructor(vars: TsApiCustom) {
     logger.info("BACKEND_TYPE: Custom");
-    this.vars = vars;
-    this.wretch = wretch(vars.BACKEND_URL)
-      .auth(`Bearer ${vars.BACKEND_TOKEN}`)
-      .options({ credentials: "include", mode: "cors" });
+    this.api = new CustomApiClient({
+      baseUrl: vars.BACKEND_URL,
+      token: vars.BACKEND_TOKEN,
+    });
+    this.wsUrl = wsUrlWithToken(vars.BACKEND_WS_URL, vars.BACKEND_TOKEN);
 
     this.connect();
   }
@@ -45,9 +55,7 @@ export class TsBackendCustomApi implements TsBackend {
 
     let socket: WebSocket;
     try {
-      socket = new WebSocket(this.vars.BACKEND_WS_URL, {
-        headers: { Authorization: `Bearer ${this.vars.BACKEND_TOKEN}` },
-      });
+      socket = new WebSocket(this.wsUrl);
     } catch (error) {
       // a throw here used to kill the reconnect chain for good
       logger.warn(`[WS] could not create socket: ${String(error)}`);
@@ -70,9 +78,9 @@ export class TsBackendCustomApi implements TsBackend {
       this.resync("websocket (re)connected");
     };
 
-    socket.onerror = (error) => {
+    socket.onerror = () => {
       if (!isCurrent()) return;
-      logger.warn(`[WS] onerror (#${generation}): ${error.message}`);
+      logger.warn(`[WS] onerror (#${generation})`);
     };
 
     socket.onclose = (event) => {
@@ -86,18 +94,13 @@ export class TsBackendCustomApi implements TsBackend {
       this.lastMessageAt = Date.now();
       if (typeof event.data !== "string")
         return logger.info(
-          `Invalid ws event (must be string) not ${typeof event.data} -> "${event.data}"`,
+          `[WS] invalid ws event (must be string) not ${typeof event.data}`,
         );
       this.handleSocketMessage(event.data);
     };
-
-    // protocol level ping frames also prove the connection is alive
-    socket.on("ping", () => {
-      this.lastMessageAt = Date.now();
-    });
   }
 
-  /** removes all handlers of the current socket and terminates it */
+  /** detaches all handlers of the current socket and closes it */
   private closeSocket() {
     const socket = this.socket;
     this.socket = undefined;
@@ -106,8 +109,7 @@ export class TsBackendCustomApi implements TsBackend {
     socket.onerror = null;
     socket.onclose = null;
     socket.onmessage = null;
-    socket.removeAllListeners();
-    socket.terminate();
+    socket.close();
   }
 
   private scheduleReconnect(reason: string) {
@@ -160,14 +162,13 @@ export class TsBackendCustomApi implements TsBackend {
   private handleSocketMessage(data: string) {
     logger.debug(`[WS] ws msg: ${data}`);
     try {
-      const wsEvent = JSON.parse(data) as TsWsEvent;
-      this.processWebSocketEvent(wsEvent);
+      this.processWebSocketEvent(parseWsEvent(data));
     } catch (error) {
-      logger.warn("Error parsing WebSocket message:", error);
+      logger.warn(`[WS] dropping invalid event ${data}: ${String(error)}`);
     }
   }
 
-  private processWebSocketEvent(event: TsWsEvent) {
+  private processWebSocketEvent(event: TsWsEvent): void {
     switch (event.type) {
       case "clientConnect":
         this.handleClientConnect(event.e.client);
@@ -176,7 +177,7 @@ export class TsBackendCustomApi implements TsBackend {
         this.handleClientDisconnect(event.e.client);
         break;
       case "clientMoved":
-        this.handleClientMoved(event.e.client, event.e.channel);
+        this.handleClientMoved(event.e.client, event.e.channel.channelName);
         break;
       case "connected":
         logger.info("[WS] WebSocket connected msg");
@@ -197,8 +198,10 @@ export class TsBackendCustomApi implements TsBackend {
           `[WS] heartbeat (ts: ${event.tsConnected}, clients: ${event.clientCount})`,
         );
         break;
-      default:
-        logger.info(`Unknown event: ${JSON.stringify(event)}`);
+      default: {
+        const _exhaustive: never = event;
+        logger.info(`Unknown event: ${JSON.stringify(_exhaustive)}`);
+      }
     }
   }
 
@@ -210,7 +213,7 @@ export class TsBackendCustomApi implements TsBackend {
    */
   private triggerRefresh(reason: string) {
     logger.info(`[WS] refresh: ${reason}`);
-    queryClient.invalidateQueries({ queryKey: queryKey.clients });
+    this.api.invalidate();
     requestRefresh();
   }
 
@@ -220,30 +223,27 @@ export class TsBackendCustomApi implements TsBackend {
   }
 
   private handleClientConnect(client: TeamSpeakClient | undefined) {
-    if (!client || client.clientType !== clientType.normalUser) return;
-    logger.info(`[WS]: Client connect: ${client.clientNickname}`);
-    this.triggerRefresh(`client connect: ${client.clientNickname}`);
+    if (client && client.clientType !== clientType.normalUser) return;
+    logger.info(`[WS]: Client connect: ${client?.clientNickname ?? "?"}`);
+    this.triggerRefresh("client connected");
   }
 
   private handleClientDisconnect(client: TeamSpeakClient | undefined) {
-    if (!client || client.clientType !== clientType.normalUser) return;
-    logger.info(`[WS]: Client disconnect: ${client.clientNickname}`);
-    this.triggerRefresh(`client disconnect: ${client.clientNickname}`);
+    if (client && client.clientType !== clientType.normalUser) return;
+    logger.info(`[WS]: Client disconnect: ${client?.clientNickname ?? "?"}`);
+    this.triggerRefresh("client disconnected");
   }
 
-  private handleClientMoved(
-    client: TeamSpeakClient,
-    channel: { channelName: string },
-  ) {
+  private handleClientMoved(client: TeamSpeakClient, channelName: string) {
     logger.info(
-      `[WS]: Client moved: ${client.clientNickname} [${channel.channelName}]`,
+      `[WS]: Client moved: ${client.clientNickname} [${channelName}]`,
     );
-    this.triggerRefresh(`client moved: ${client.clientNickname}`);
+    this.triggerRefresh("client moved");
   }
 
   async getClients(args: {
     forceRefresh?: boolean;
   }): Promise<TeamSpeakClient[]> {
-    return getClientsQuery(args, this.wretch);
+    return this.api.getClients(args);
   }
 }
