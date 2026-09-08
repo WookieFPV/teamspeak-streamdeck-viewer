@@ -55,11 +55,14 @@ export const buildClockSvg = (opts: {
   char: string;
   pixelSize: number;
   family: string;
-}): string =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${opts.pixelSize} ${opts.pixelSize}">
+}): string => {
+  // the old hardcoded 50px was tuned for an 80px Mini key - keep that ratio
+  // so other key resolutions scale the glyph instead of shrinking it
+  const fontSizePx = opts.pixelSize * 0.625;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${opts.pixelSize} ${opts.pixelSize}">
     <text
       font-family="${escapeXml(opts.family)}"
-      font-size="50px"
+      font-size="${fontSizePx}px"
       font-weight="bold"
       dx="50%"
       dy="75%"
@@ -68,3 +71,4 @@ export const buildClockSvg = (opts: {
     >${escapeXml(opts.char)}
     </text>
   </svg>`;
+};

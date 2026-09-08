@@ -43,4 +43,13 @@ describe("buildClockSvg", () => {
     expect(svg).toContain(">:");
     expect(svg).toContain("</text>");
   });
+
+  test("scales the glyph with the key resolution", () => {
+    expect(
+      buildClockSvg({ char: "1", pixelSize: 80, family: "sans" }),
+    ).toContain('font-size="50px"');
+    expect(
+      buildClockSvg({ char: "1", pixelSize: 160, family: "sans" }),
+    ).toContain('font-size="100px"');
+  });
 });
