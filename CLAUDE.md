@@ -31,11 +31,12 @@ running **bun** (no node/nvm on the device anymore — see below). That drives e
   allow one, or add it under `trustedDependencies` directly (preferred — keeps it in git).
 - Build target is `bun build ./src/index.ts --outdir dist --target node --format cjs` (see the
   `build` script in `package.json`) — replaced `tsup`, which is no longer a dependency. `--target
-  node` (not `bun`) plus `--format cjs` is deliberate: it keeps `__dirname` working for the
-  dist-relative asset paths (see "Things that will bite you" below) and keeps CJS semantics the same
-  as the old tsup output, so nothing else about the runtime behavior changed. Bun's bundler resolves
-  ESM-only deps (`wretch`, `p-wait-for`, `is-online`) itself at build time — no more `require(esm)`
-  runtime workaround needed.
+  node` (not `bun`) plus `--format cjs` keeps CJS semantics the same as the old tsup output, so
+  nothing about the runtime module system changed. Note that unlike tsup/esbuild, bun's bundler does
+  **not** rewrite `__dirname` to the output file's directory — it bakes in the original source file's
+  path instead (see "Things that will bite you" below for why that broke asset loading and how it was
+  fixed). Bun's bundler resolves ESM-only deps (`wretch`, `p-wait-for`, `is-online`) itself at build
+  time — no more `require(esm)` runtime workaround needed.
 - Native modules that can't be bundled (their `require()` resolves a real `.node` binary via a
   relative path that bundling would break) are passed as `--external` in the `build` script: `sharp`,
   `node-hid`, `@julusian/jpeg-turbo`, and `cpu-features` (ssh2's optional native speedup, deliberately
@@ -101,12 +102,17 @@ the process never dies.
 ## Things that will bite you
 
 - **`dist/` is not in git.** After pulling on the device you must `bun run build` before restarting.
-- **Asset paths are `dist`-relative.** `paintStreamdeck.ts` resolves `path.resolve(__dirname,
-  "../assets/...")`, which only works because the bundle lands in `dist/`. Don't "fix" this to be
-  src-relative. This is also why the build targets CJS (`--format cjs`), not ESM: `__dirname` doesn't
-  exist in ESM (`import.meta.dirname` would be the equivalent) — if the build ever moves to ESM
-  output, this needs updating too, not just left to break.
-- **dotenv reads `<cwd>/.env`**, so the working directory the process is started from matters.
+- **Asset paths are `cwd`-relative, not `__dirname`-relative.** `paintStreamdeck.ts` resolves
+  `path.resolve(process.cwd(), "assets", ...)`. This used to be `__dirname`-based (relying on the
+  bundle landing in `dist/`, one level below the repo root, same depth as `assets/`), but bun's
+  bundler bakes `__dirname` in as the *original source file's absolute path on the machine that ran
+  the build* rather than rewriting it to the output file's directory the way tsup/esbuild did — so
+  after the bun migration it resolved to `src/streamdeck/../assets` (wrong, and worse, machine
+  path was hardcoded into the bundle) instead of `dist/../assets`. `process.cwd()` sidesteps the
+  bundler behavior entirely and matches the dotenv assumption below, so both now depend on the same
+  invariant: whatever starts the process must do so from the repo root.
+- **dotenv reads `<cwd>/.env`**, so the working directory the process is started from matters — the
+  systemd unit's `WorkingDirectory=` and asset resolution above both depend on this.
 - The main loop catches everything and keeps going, so failures show up as repeated log lines
   rather than a crash. Read the log, don't assume a silent process is healthy.
 - There are no tests. Verify changes by running the real thing against the hardware.

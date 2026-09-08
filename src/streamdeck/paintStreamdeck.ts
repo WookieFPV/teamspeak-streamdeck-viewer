@@ -57,7 +57,7 @@ export const streamDeckPaint = async (
 ) => {
   try {
     const finalBuffer = await sharp(
-      path.resolve(__dirname, `../assets/${color}.png`),
+      path.resolve(process.cwd(), "assets", `${color}.png`),
     )
       .composite([
         {
@@ -116,7 +116,7 @@ const renderChar = async (
   index: number,
 ) => {
   const finalBuffer = await sharp(
-    path.resolve(__dirname, "../assets/black.png"),
+    path.resolve(process.cwd(), "assets", "black.png"),
   )
     .composite([
       {
