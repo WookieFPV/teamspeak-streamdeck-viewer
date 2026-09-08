@@ -43,12 +43,13 @@ const runTsViewer = async () => {
       await waitForRefresh(getPollingDelay(clients));
     } catch (err) {
       if (isShuttingDown()) break;
-      logger.info("err in main loop");
-      logger.warn(err);
+      const errDetail =
+        err instanceof Error ? (err.stack ?? err.message) : String(err);
+      logger.warn(`error in main loop: ${errDetail}`);
       // a failed fetch means there is no trustworthy client list right now,
       // so replace whatever was on screen with an explicit error instead of
       // leaving stale client data showing
-      await paintStatusScreen(streamDeck, "err", "red");
+      await paintStatusScreen(streamDeck, "err", "red", "fetch error");
       // also interruptible: a reconnect event retries right away
       await waitForRefresh(config.idleTimeError);
     }
