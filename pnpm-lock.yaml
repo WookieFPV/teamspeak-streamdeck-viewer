@@ -30,8 +30,8 @@ importers:
         specifier: ^3.4.0
         version: 3.4.0
       p-wait-for:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^3.2.0
+        version: 3.2.0
       sharp:
         specifier: ^0.33.5
         version: 0.33.5
@@ -42,8 +42,8 @@ importers:
         specifier: 3.19.0
         version: 3.19.0
       wretch:
-        specifier: 3.0.9
-        version: 3.0.9
+        specifier: 2.10.0
+        version: 2.10.0
       ws:
         specifier: ^8.21.3
         version: 8.21.3
@@ -1141,9 +1141,9 @@ packages:
     resolution: {integrity: sha512-MyIV3ZA/PmyBN/ud8vV9XzwTrNtR4jFrObymZYnZqMmW0zA8Z17vnT0rBgFE/TlohB+YCHqXMgZzb3Csp49vqg==}
     engines: {node: '>=14.16'}
 
-  p-wait-for@6.0.0:
-    resolution: {integrity: sha512-2kKzMtjS8TVcpCOU/gr3vZ4K/WIyS1AsEFXFWapM/0lERCdyTbB6ZeuCIp+cL1aeLZfQoMdZFCBTHiK4I9UtOw==}
-    engines: {node: '>=20'}
+  p-wait-for@3.2.0:
+    resolution: {integrity: sha512-wpgERjNkLrBiFmkMEjuZJEWKKDrNfHCKA1OhyN1wg1FrLkULbviEy6py1AyJUgZ72YWFbZ38FIpnqvVqAlDUwA==}
+    engines: {node: '>=8'}
 
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
@@ -1437,9 +1437,9 @@ packages:
     resolution: {integrity: sha512-42AtmgqjV+X1VpdOfyTGOYRi0/zsoLqtXQckTmqTeybT+BDIbM/Guxo7x3pE2vtpr1ok6xRqM9OpBe+Jyoqyww==}
     engines: {node: '>=18'}
 
-  wretch@3.0.9:
-    resolution: {integrity: sha512-RXJQp5aOBfHQaDCLRyFXQooWDBOHrQxVgCH/6OFaFPBKjeUiXMQ3NV1b8qqI7CR+v4meVBWYs242P8n+rWRjzA==}
-    engines: {node: '>=22'}
+  wretch@2.10.0:
+    resolution: {integrity: sha512-umAgGsgEfWVm2GT9Gl+Uyl2AI0q1P8WqXMGiDbSf5QImZW7bdnUbTUrgXYzYH+VmtlM6RqwJQH7JNizSNwt6kw==}
+    engines: {node: '>=14'}
 
   ws@8.21.3:
     resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
@@ -2329,7 +2329,9 @@ snapshots:
 
   p-timeout@6.1.4: {}
 
-  p-wait-for@6.0.0: {}
+  p-wait-for@3.2.0:
+    dependencies:
+      p-timeout: 3.2.0
 
   pathe@2.0.3: {}
 
@@ -2659,7 +2661,7 @@ snapshots:
       string-width: 7.2.0
       strip-ansi: 7.2.0
 
-  wretch@3.0.9: {}
+  wretch@2.10.0: {}
 
   ws@8.21.3: {}
 
