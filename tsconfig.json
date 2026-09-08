@@ -11,9 +11,8 @@
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     "types": ["bun-types"],
-    "baseUrl": ".",
     "paths": {
-      "~/*": ["src/*"]
+      "~/*": ["./src/*"]
     }
   }
 }
