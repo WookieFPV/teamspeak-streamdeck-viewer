@@ -1,6 +1,7 @@
 import { config } from "~/config";
 import { envVars } from "~/envVars";
 import { getStreamdeck } from "~/streamdeck/getStreamdeck";
+import { isShuttingDown } from "~/streamdeck/shutdown";
 import { paintStatusScreen } from "~/streamdeck/status";
 import { getTsBackend } from "~/teamspeak/BackendFactory";
 import { TsDrawClients } from "~/teamspeak/tsDrawClients";
@@ -26,9 +27,11 @@ const runTsViewer = async () => {
     try {
       logger.debug("TsBackend.getClients()");
       const clients = await TsBackend.getClients({});
+      if (isShuttingDown()) break;
       await TsDrawClients(clients);
       await wait(getPollingDelay(clients));
     } catch (err) {
+      if (isShuttingDown()) break;
       logger.info("err in main loop");
       logger.warn(err);
       // a failed fetch means there is no trustworthy client list right now,

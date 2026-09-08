@@ -3,6 +3,7 @@ import { listStreamDecks, openStreamDeck } from "@elgato-stream-deck/node";
 import { queryClient, queryKey } from "~/teamspeak/queryClient";
 import { logger } from "~/utils/logger";
 import { getCornerButtonIndex } from "./controlLayout";
+import { markShuttingDown } from "./shutdown";
 import { paintStatusScreen } from "./status";
 
 export const getStreamdeck = () =>
@@ -42,6 +43,9 @@ const registerRestartButton = (streamDeck: StreamDeck) => {
     logger.warn(
       "restart button pressed, exiting so systemd restarts the service",
     );
+    // set before any await: the main loop keeps running concurrently and
+    // would otherwise repaint over the "restart" tile mid-shutdown
+    markShuttingDown();
     // let the user see it's actually doing something before the deck goes
     // dark for the ~10s it takes systemd to bring the process back up
     await paintStatusScreen(streamDeck, "restart", "orange");

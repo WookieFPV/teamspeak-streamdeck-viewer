@@ -2,6 +2,7 @@ import wretch, { type Wretch } from "wretch";
 import WebSocket from "ws";
 import { config } from "~/config";
 import type { TsApiCustom } from "~/envVars";
+import { isShuttingDown } from "~/streamdeck/shutdown";
 import { logger } from "~/utils/logger";
 import { addLastActiveTime } from "../addLastActiveTime";
 import type { TsBackend } from "../BackendFactory";
@@ -253,6 +254,7 @@ export class TsBackendCustomApi implements TsBackend {
   private async refreshAndDrawClients() {
     try {
       const clients = await this.getClients({ forceRefresh: true });
+      if (isShuttingDown()) return;
       await TsDrawClients(clients);
     } catch (error) {
       logger.warn("Error refreshing clients:", error);
