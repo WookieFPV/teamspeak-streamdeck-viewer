@@ -5,7 +5,7 @@
     "": {
       "name": "@wookbot/streamdeck-ts-viewer",
       "dependencies": {
-        "@elgato-stream-deck/node": "^7.6.3",
+        "@elgato-stream-deck/node": "^7.7.0",
         "dotenv": "17.4.2",
         "node-hid": "^3.4.0",
         "sharp": "^0.35.4",
@@ -50,11 +50,11 @@
 
     "@dabh/diagnostics": ["@dabh/diagnostics@2.0.9", "", { "dependencies": { "@so-ric/colorspace": "^1.1.6", "enabled": "2.0.x", "kuler": "^2.0.0" } }, "sha512-R6siwR65Hm+3yfgP7o8DKhNvputQAwfoz9zTc3kyDudnomj2/BcLmD+uGQQPICjuFUp8ounPBU+jmKsocwVVAg=="],
 
-    "@elgato-stream-deck/core": ["@elgato-stream-deck/core@7.6.3", "", { "dependencies": { "eventemitter3": "^5.0.4", "tslib": "^2.8.1" } }, "sha512-5BUNeXe4baIZP2BPAlTBpvYTusnKHzJUZ5QTO9Nk5f57Up958hOfhz3aihxS0lSB1ew/m5+7bsgefjZt7FReOg=="],
+    "@elgato-stream-deck/core": ["@elgato-stream-deck/core@7.7.0", "", { "dependencies": { "eventemitter3": "^5.0.4", "tslib": "^2.8.1" } }, "sha512-xLe8IFkgPfHN5NTJLQgU1Z9Q2WAsFYYydpaclUWsob3Wcc1GAH9SI7pFvp2eoLJ/DTcM+fcg9BxFggrEWy6Vug=="],
 
-    "@elgato-stream-deck/node": ["@elgato-stream-deck/node@7.6.3", "", { "dependencies": { "@elgato-stream-deck/core": "7.6.3", "@elgato-stream-deck/node-lib": "7.6.3", "eventemitter3": "^5.0.4", "node-hid": "^3.2.0", "p-queue": "^6.6.2", "tslib": "^2.8.1" } }, "sha512-j6XkFqzi92LVAHJ2HLY2MCNQb3e7Vgh4vk/hgqPxNVYznKneNheFHsKQrx7qS85elYqnxLr5m8nCBCa+327e8w=="],
+    "@elgato-stream-deck/node": ["@elgato-stream-deck/node@7.7.0", "", { "dependencies": { "@elgato-stream-deck/core": "7.7.0", "@elgato-stream-deck/node-lib": "7.7.0", "eventemitter3": "^5.0.4", "node-hid": "^3.2.0", "p-queue": "^6.6.2", "tslib": "^2.8.1" } }, "sha512-+22R8GrS2IwpS0fBKfC55BlbEnTCuhmH6kur6sAHsUcbikOmL1g0yyOCw6yLfrVvWAZF+Ae+4eK3jDzT7GsBRQ=="],
 
-    "@elgato-stream-deck/node-lib": ["@elgato-stream-deck/node-lib@7.6.3", "", { "dependencies": { "jpeg-js": "^0.4.4", "tslib": "^2.8.1" }, "peerDependencies": { "@julusian/jpeg-turbo": "^1.1.2 || ^2.0.0 || ^3.0.0" } }, "sha512-Fzf8HNKg5Ur1wlREBQIhD8qSSMPF5b9T2EEtNu6pVXS/MYOWXt6y8aVndhac1rQtm7hYVKcKfMbfTDfG7L+J1g=="],
+    "@elgato-stream-deck/node-lib": ["@elgato-stream-deck/node-lib@7.7.0", "", { "dependencies": { "jpeg-js": "^0.4.4", "tslib": "^2.8.1" }, "peerDependencies": { "@julusian/jpeg-turbo": "^1.1.2 || ^2.0.0 || ^3.0.0" } }, "sha512-Md+DJjrwUiq15zFvGsIYiFzufD6AyFb9Cw3rpodrvbuSt/XoDhYguFsNseCO19wZu+CcH5RfStkoqRe37YD1xA=="],
 
     "@emnapi/runtime": ["@emnapi/runtime@1.11.3", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA=="],
 

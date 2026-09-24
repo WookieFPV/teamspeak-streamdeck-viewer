@@ -28,7 +28,7 @@
     "sharp"
   ],
   "dependencies": {
-    "@elgato-stream-deck/node": "^7.6.3",
+    "@elgato-stream-deck/node": "^7.7.0",
     "dotenv": "17.4.2",
     "node-hid": "^3.4.0",
     "sharp": "^0.35.4",
