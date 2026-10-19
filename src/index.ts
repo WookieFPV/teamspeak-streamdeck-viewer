@@ -8,6 +8,7 @@ import { getTsBackend } from "~/teamspeak/BackendFactory";
 import { TsDrawClients } from "~/teamspeak/tsDrawClients";
 import { getPollingDelay } from "~/teamspeak/tsHelper";
 import { wait, waitForNetwork, withTimeout } from "~/utils/helper";
+import { saveIncident } from "~/utils/incident";
 import { logger } from "~/utils/logger";
 import { waitForRefresh } from "~/utils/refreshTrigger";
 import { beat, setStage, startWatchdog } from "~/utils/watchdog";
@@ -38,6 +39,7 @@ const runTsViewer = async () => {
     if (isShuttingDown()) return;
     markShuttingDown();
     logger.error(`watchdog: main loop wedged (${reason}), exiting for restart`);
+    saveIncident(reason);
     process.exit(1);
   });
 
