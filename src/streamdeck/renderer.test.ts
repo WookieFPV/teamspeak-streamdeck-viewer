@@ -53,3 +53,16 @@ describe("buildClockSvg", () => {
     ).toContain('font-size="100px"');
   });
 });
+
+describe("buildClockSvg incident dot", () => {
+  const base = { char: ":", pixelSize: 80, family: "sans" };
+  test("no dot without incidents", () => {
+    expect(buildClockSvg(base)).not.toContain("<circle");
+  });
+  test("dot for one incident, count shown from two", () => {
+    const one = buildClockSvg({ ...base, incidentCount: 1 });
+    expect(one).toContain("<circle");
+    expect(one).not.toContain(">1</text>");
+    expect(buildClockSvg({ ...base, incidentCount: 3 })).toContain(">3</text>");
+  });
+});

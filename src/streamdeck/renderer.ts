@@ -55,7 +55,19 @@ export const buildClockSvg = (opts: {
   char: string;
   pixelSize: number;
   family: string;
+  /** watchdog incidents to flag: draws a red dot (and the count if > 1) */
+  incidentCount?: number;
 }): string => {
+  const count = opts.incidentCount ?? 0;
+  const size = opts.pixelSize;
+  const incident =
+    count > 0
+      ? `<circle cx="${size / 2}" cy="${size * 0.9}" r="${size * 0.045}" fill="#f00" />${
+          count > 1
+            ? `<text font-family="${escapeXml(opts.family)}" font-size="${size * 0.14}px" font-weight="bold" x="${size * 0.58}" y="${size * 0.945}" fill="#f00">${count}</text>`
+            : ""
+        }`
+      : "";
   // the old hardcoded 50px was tuned for an 80px Mini key - keep that ratio
   // so other key resolutions scale the glyph instead of shrinking it
   const fontSizePx = opts.pixelSize * 0.625;
@@ -69,6 +81,6 @@ export const buildClockSvg = (opts: {
       fill="#fff"
       text-anchor="middle"
     >${escapeXml(opts.char)}
-    </text>
+    </text>${incident}
   </svg>`;
 };

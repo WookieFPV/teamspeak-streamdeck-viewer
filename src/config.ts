@@ -13,6 +13,10 @@ export const config = {
   watchdogStallMs: 60 * 1000,
   watchdogCheckMs: 5 * 1000,
 
+  // a red dot on the clock's ":" shows watchdog incidents (see utils/incident.ts)
+  // younger than this - it fades out on its own once nobody needed to look
+  incidentIndicatorDays: 7,
+
   minIdleTimeMins: 5, // time when user is shown as idle/afk
 
   // websocket handling of the customApi backend

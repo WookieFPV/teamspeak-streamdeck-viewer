@@ -1,7 +1,9 @@
 import { promises as fs } from "node:fs";
 import type { StreamDeck } from "@elgato-stream-deck/node";
 import sharp from "sharp";
+import { config } from "~/config";
 import { envVars } from "~/envVars";
+import { countRecentIncidents } from "~/utils/incident";
 import { logger } from "~/utils/logger";
 import { assetPath } from "./assets";
 import type { Colors } from "./colors";
@@ -162,6 +164,20 @@ export const drawClock = async (
   }
 };
 
+// incidents only appear when the process restarts, so a slow refresh is
+// plenty (it also lets old ones age out of the indicator while running)
+let incidentCache = { at: 0, count: 0 };
+const recentIncidents = (): number => {
+  const now = Date.now();
+  if (now - incidentCache.at > 10 * 60 * 1000) {
+    incidentCache = {
+      at: now,
+      count: countRecentIncidents(config.incidentIndicatorDays, now),
+    };
+  }
+  return incidentCache.count;
+};
+
 const renderChar = async (
   streamDeck: StreamDeck,
   char: string,
@@ -169,7 +185,9 @@ const renderChar = async (
 ): Promise<void> => {
   // hours/minutes only change once a minute and ":" never does - without this
   // the 1s loop re-composites the clock 60x per visible minute change
-  const hash = `clock:${char}`;
+  // only the ":" key carries the incident dot, so only its image depends on it
+  const incidentCount = char === ":" ? recentIncidents() : 0;
+  const hash = `clock:${char}:${incidentCount}`;
   if (isKeyUpToDate(index, hash)) return;
   const fonts = fontSettings();
   const ok = await paintSvg(
@@ -180,6 +198,7 @@ const renderChar = async (
       char,
       pixelSize: keyPixelSize(streamDeck, index),
       family: fonts.family,
+      incidentCount,
     }),
   );
   if (ok) markKeyPainted(index, hash);

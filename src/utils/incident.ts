@@ -68,3 +68,20 @@ export const saveIncident = (reason: string): void => {
     logger.error(`could not save incident: ${err}`);
   }
 };
+
+/** number of incident files younger than `days` (0 if the dir does not exist) */
+export const countRecentIncidents = (
+  days: number,
+  now = Date.now(),
+  dir = INCIDENT_DIR,
+): number => {
+  try {
+    return readdirSync(dir).filter(
+      (f) =>
+        f.endsWith(".log") &&
+        now - statSync(path.join(dir, f)).mtimeMs < days * 86_400_000,
+    ).length;
+  } catch {
+    return 0;
+  }
+};

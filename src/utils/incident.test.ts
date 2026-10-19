@@ -16,3 +16,15 @@ test("saveIncident writes reason and log tail, prunes old files", async () => {
   expect(content).toContain('stuck in stage "paint"');
   expect(content).toContain("line two");
 });
+
+test("countRecentIncidents only counts files younger than the window", async () => {
+  const { utimesSync, writeFileSync } = await import("node:fs");
+  const dir = mkdtempSync(path.join(tmpdir(), "incident-count-"));
+  writeFileSync(path.join(dir, "new.log"), "x");
+  writeFileSync(path.join(dir, "old.log"), "x");
+  const tenDaysAgo = (Date.now() - 10 * 86_400_000) / 1000;
+  utimesSync(path.join(dir, "old.log"), tenDaysAgo, tenDaysAgo);
+  const { countRecentIncidents } = await import("./incident");
+  expect(countRecentIncidents(7, Date.now(), dir)).toBe(1);
+  expect(countRecentIncidents(7, Date.now(), "/nonexistent-dir")).toBe(0);
+});
