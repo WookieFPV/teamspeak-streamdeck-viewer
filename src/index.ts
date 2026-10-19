@@ -7,7 +7,12 @@ import { paintStatusScreen } from "~/streamdeck/status";
 import { getTsBackend } from "~/teamspeak/BackendFactory";
 import { TsDrawClients } from "~/teamspeak/tsDrawClients";
 import { getPollingDelay } from "~/teamspeak/tsHelper";
-import { wait, waitForNetwork, withTimeout } from "~/utils/helper";
+import {
+  TimeoutError,
+  wait,
+  waitForNetwork,
+  withTimeout,
+} from "~/utils/helper";
 import { saveIncident } from "~/utils/incident";
 import { logger } from "~/utils/logger";
 import { waitForRefresh } from "~/utils/refreshTrigger";
@@ -78,9 +83,10 @@ const runTsViewer = async () => {
         config.paintTimeoutMs,
         paintStatusScreen(streamDeck, "err", "red", "fetch error"),
       ).catch((e: unknown) => logger.warn(`error tile failed: ${e}`));
-      // the loop is alive and handling the failure (e.g. TS server down) -
-      // only a loop that stops reaching this point counts as wedged
-      beat();
+      // a fast failure (e.g. TS server down: connection refused) means the
+      // loop is alive and handling it. A timeout means something is hung, so
+      // no beat: the watchdog restarts us if it keeps happening.
+      if (!(err instanceof TimeoutError)) beat();
       setStage("error sleep");
       // also interruptible: a reconnect event retries right away
       await waitForRefresh(config.idleTimeError);
