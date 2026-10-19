@@ -7,9 +7,10 @@ import { paintStatusScreen } from "~/streamdeck/status";
 import { getTsBackend } from "~/teamspeak/BackendFactory";
 import { TsDrawClients } from "~/teamspeak/tsDrawClients";
 import { getPollingDelay } from "~/teamspeak/tsHelper";
-import { wait, waitForNetwork } from "~/utils/helper";
+import { wait, waitForNetwork, withTimeout } from "~/utils/helper";
 import { logger } from "~/utils/logger";
 import { waitForRefresh } from "~/utils/refreshTrigger";
+import { beat, setStage, startWatchdog } from "~/utils/watchdog";
 
 const runTsViewer = async () => {
   logger.info("run runTsViewer");
@@ -32,12 +33,32 @@ const runTsViewer = async () => {
   await paintStatusScreen(streamDeck, backendLabel, "black", `3/${bootSteps}`);
   const TsBackend = getTsBackend(envVars);
 
+  beat();
+  startWatchdog(config.watchdogStallMs, config.watchdogCheckMs, (reason) => {
+    if (isShuttingDown()) return;
+    markShuttingDown();
+    logger.error(`watchdog: main loop wedged (${reason}), exiting for restart`);
+    process.exit(1);
+  });
+
   while (true) {
     try {
       logger.debug("TsBackend.getClients()");
-      const clients = await TsBackend.getClients({});
+      setStage("fetch clients");
+      const clients = await withTimeout(
+        "getClients",
+        config.fetchTimeoutMs,
+        TsBackend.getClients({}),
+      );
       if (isShuttingDown()) break;
-      await TsDrawClients(clients);
+      setStage("paint");
+      await withTimeout(
+        "TsDrawClients",
+        config.paintTimeoutMs,
+        TsDrawClients(clients),
+      );
+      beat();
+      setStage("sleep");
       // interruptible: backend events wake the loop immediately instead of
       // waiting out the full polling delay (up to 5s)
       await waitForRefresh(getPollingDelay(clients));
@@ -49,7 +70,16 @@ const runTsViewer = async () => {
       // a failed fetch means there is no trustworthy client list right now,
       // so replace whatever was on screen with an explicit error instead of
       // leaving stale client data showing
-      await paintStatusScreen(streamDeck, "err", "red", "fetch error");
+      setStage("error tile");
+      await withTimeout(
+        "error tile",
+        config.paintTimeoutMs,
+        paintStatusScreen(streamDeck, "err", "red", "fetch error"),
+      ).catch((e: unknown) => logger.warn(`error tile failed: ${e}`));
+      // the loop is alive and handling the failure (e.g. TS server down) -
+      // only a loop that stops reaching this point counts as wedged
+      beat();
+      setStage("error sleep");
       // also interruptible: a reconnect event retries right away
       await waitForRefresh(config.idleTimeError);
     }

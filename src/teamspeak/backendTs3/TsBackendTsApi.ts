@@ -1,4 +1,5 @@
 import type { TeamSpeak } from "ts3-nodejs-library";
+import { config } from "~/config";
 import type { EnvVars } from "~/envVars";
 import { logger } from "~/utils/logger";
 import { requestRefresh } from "~/utils/refreshTrigger";
@@ -35,7 +36,7 @@ export class TsBackendTsApi implements TsBackend {
             requestRefresh();
           },
         }),
-      { staleMs: Number.POSITIVE_INFINITY },
+      { staleMs: Number.POSITIVE_INFINITY, timeoutMs: config.fetchTimeoutMs },
     );
     // Always fetch fresh: the main loop's polling delay is the throttle. A
     // long staleTime here used to make polling return cached data (up to a
@@ -48,7 +49,7 @@ export class TsBackendTsApi implements TsBackend {
         logger.info(JSON.stringify(clients.map((c) => c.clientNickname)));
         return clients;
       },
-      { forceRefresh, staleMs: 0 },
+      { forceRefresh, staleMs: 0, timeoutMs: config.fetchTimeoutMs },
     );
   }
 }

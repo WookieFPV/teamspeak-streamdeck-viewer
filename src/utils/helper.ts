@@ -31,3 +31,34 @@ export const waitForNetwork = async () => {
   }
   logger.info("waiting on network done");
 };
+
+export class TimeoutError extends Error {
+  constructor(label: string, ms: number) {
+    super(`${label} timed out after ${ms}ms`);
+    this.name = "TimeoutError";
+  }
+}
+
+/**
+ * Reject if `promise` has not settled within `ms`. The underlying work is not
+ * cancelled (it can't be); this only stops the caller from waiting forever on
+ * a promise that never settles, which would wedge the main loop.
+ */
+export const withTimeout = <T>(
+  label: string,
+  ms: number,
+  promise: Promise<T>,
+): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new TimeoutError(label, ms)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });

@@ -5,6 +5,14 @@ export const config = {
   idleTimeWithRandomUsers: 5 * 1000,
   idleTimeError: 10 * 1000,
 
+  // a hung await must not freeze the deck: every fetch/paint step is bounded
+  // and, as the backstop, the process exits (systemd restarts it) when no
+  // fetch+paint cycle completed for watchdogStallMs
+  fetchTimeoutMs: 15 * 1000,
+  paintTimeoutMs: 15 * 1000,
+  watchdogStallMs: 60 * 1000,
+  watchdogCheckMs: 5 * 1000,
+
   minIdleTimeMins: 5, // time when user is shown as idle/afk
 
   // websocket handling of the customApi backend

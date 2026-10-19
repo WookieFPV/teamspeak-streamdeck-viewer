@@ -109,6 +109,12 @@ and repaints immediately instead of waiting out the full delay; the main loop is
   which key (pure, tested), `renderer.ts` builds the SVG text layer (pure, tested), `deck.ts`
   composites it onto a background PNG with sharp and pushes the raw buffer to a key, `colors.ts`
   maps client state (talking, muted, afk, main user) to one of the PNGs in `assets/`.
+- `src/utils/watchdog.ts` + `withTimeout` (`utils/helper.ts`) — anti-freeze. Every fetch/paint await
+  in the main loop is bounded (`config.fetchTimeoutMs` / `paintTimeoutMs`, also `Store`'s `timeoutMs`),
+  and a watchdog exits the process when no loop cycle finished for `config.watchdogStallMs` so systemd
+  restarts it (same effect as the restart button). The log line `watchdog: main loop wedged ... stuck in
+  stage "<x>"` names the step that hung — grep for it to find the root cause (`fetch clients` = TS/API
+  connection, `paint` = HID/sharp).
 - `src/utils/logger.ts` — winston. Everything logs through it, never `console.log`.
 
 ## Things that will bite you

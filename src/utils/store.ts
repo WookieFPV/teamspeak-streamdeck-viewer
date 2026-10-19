@@ -1,3 +1,5 @@
+import { withTimeout } from "~/utils/helper";
+
 /**
  * A tiny async cache that replaces the previous `@tanstack/query-core`
  * `QueryClient` usage. Each cached value is fetched explicitly through
@@ -33,11 +35,12 @@ export class Store<T> {
   /**
    * Return the cached value if it is fresher than `staleMs`, otherwise run
    * `fn`, cache its result and return it. Concurrent callers share a single
-   * in-flight fetch. Failures are never cached.
+   * in-flight fetch. Failures are never cached. With `timeoutMs` a fetch that
+   * never settles is rejected and dropped, so it can't pin `inFlight` forever.
    */
   async fetch(
     fn: () => Promise<T>,
-    opts?: { forceRefresh?: boolean; staleMs?: number },
+    opts?: { forceRefresh?: boolean; staleMs?: number; timeoutMs?: number },
   ): Promise<T> {
     const staleMs = opts?.staleMs ?? 0;
     if (
@@ -48,7 +51,10 @@ export class Store<T> {
       return this.data;
     }
     if (this.inFlight) return this.inFlight;
-    const pending = fn().then(
+    const run = fn();
+    const pending = (
+      opts?.timeoutMs ? withTimeout("store fetch", opts.timeoutMs, run) : run
+    ).then(
       (result) => {
         this.data = result;
         this.lastSetAt = Date.now();

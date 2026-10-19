@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { config } from "~/config";
 import { addLastActiveTime } from "~/teamspeak/addLastActiveTime";
 import { logger } from "~/utils/logger";
 import { Store } from "~/utils/store";
@@ -28,6 +29,7 @@ export class CustomApiClient {
     return this.clientStore.fetch(() => this.fetchClients(), {
       forceRefresh,
       staleMs: 0,
+      timeoutMs: config.fetchTimeoutMs,
     });
   }
 
