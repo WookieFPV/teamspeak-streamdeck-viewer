@@ -1,6 +1,7 @@
 import type { TeamSpeak } from "ts3-nodejs-library";
 import { config } from "~/config";
 import type { EnvVars } from "~/envVars";
+import { TimeoutError } from "~/utils/helper";
 import { logger } from "~/utils/logger";
 import { requestRefresh } from "~/utils/refreshTrigger";
 import { Store } from "~/utils/store";
@@ -41,15 +42,27 @@ export class TsBackendTsApi implements TsBackend {
     // Always fetch fresh: the main loop's polling delay is the throttle. A
     // long staleTime here used to make polling return cached data (up to a
     // day old) while still sleeping between polls.
-    return this.clientStore.fetch(
-      async () => {
-        logger.info("TS3 API clientList:");
-        const rawClients = await ts.clientList();
-        const clients = filterAndMapTs3Clients(rawClients);
-        logger.info(JSON.stringify(clients.map((c) => c.clientNickname)));
-        return clients;
-      },
-      { forceRefresh, staleMs: 0, timeoutMs: config.fetchTimeoutMs },
-    );
+    return this.clientStore
+      .fetch(
+        async () => {
+          logger.info("TS3 API clientList:");
+          const rawClients = await ts.clientList();
+          const clients = filterAndMapTs3Clients(rawClients);
+          logger.info(JSON.stringify(clients.map((c) => c.clientNickname)));
+          return clients;
+        },
+        { forceRefresh, staleMs: 0, timeoutMs: config.fetchTimeoutMs },
+      )
+      .catch((error: unknown) => {
+        // no reply in time: the query connection is slow or half-open dead.
+        // Drop it so the next poll reconnects, instead of restarting the
+        // whole process (which would hit the same server anyway).
+        if (error instanceof TimeoutError) {
+          logger.warn("[TS] clientlist got no reply, dropping the connection");
+          ts.forceQuit();
+          this.tsStore.invalidate();
+        }
+        throw error;
+      });
   }
 }

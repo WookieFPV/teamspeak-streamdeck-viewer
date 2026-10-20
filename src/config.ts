@@ -8,7 +8,7 @@ export const config = {
   // a hung await must not freeze the deck: every fetch/paint step is bounded
   // and, as the backstop, the process exits (systemd restarts it) when no
   // fetch+paint cycle completed for watchdogStallMs
-  fetchTimeoutMs: 15 * 1000,
+  fetchTimeoutMs: 30 * 1000,
   paintTimeoutMs: 15 * 1000,
   watchdogStallMs: 60 * 1000,
   watchdogCheckMs: 5 * 1000,

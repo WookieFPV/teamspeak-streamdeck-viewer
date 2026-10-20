@@ -33,6 +33,26 @@ const readTail = (file: string, bytes: number): string => {
 };
 
 /**
+ * winston rotates by renaming into numbered files (streamdeck.log,
+ * streamdeck1.log, ...), so the name from LOG_FILE can be a stale one. The
+ * active file is the most recently written sibling.
+ */
+export const findActiveLogFile = (logFile: string): string => {
+  try {
+    const dir = path.dirname(logFile);
+    const stem = path.basename(logFile, ".log");
+    const pattern = new RegExp(`^${stem}\\d*\\.log$`);
+    const newest = readdirSync(dir)
+      .filter((f) => pattern.test(f))
+      .map((f) => ({ f, mtime: statSync(path.join(dir, f)).mtimeMs }))
+      .sort((a, b) => b.mtime - a.mtime)[0];
+    return newest ? path.join(dir, newest.f) : logFile;
+  } catch {
+    return logFile;
+  }
+};
+
+/**
  * Snapshot what is needed to debug a watchdog restart into its own file,
  * which - unlike the rotating main log - survives until pruned here. Fully
  * synchronous on purpose: the caller exits the process right afterwards.
@@ -55,7 +75,10 @@ export const saveIncident = (reason: string): void => {
       `--- last ${LOG_TAIL_BYTES / 1024}KB of log ---`,
     ].join("\n");
     const logFile = process.env.LOG_FILE ?? "streamdeck.log";
-    writeFileSync(file, `${header}\n${readTail(logFile, LOG_TAIL_BYTES)}\n`);
+    writeFileSync(
+      file,
+      `${header}\n${readTail(findActiveLogFile(logFile), LOG_TAIL_BYTES)}\n`,
+    );
 
     const old = readdirSync(INCIDENT_DIR)
       .filter((f) => f.endsWith(".log"))

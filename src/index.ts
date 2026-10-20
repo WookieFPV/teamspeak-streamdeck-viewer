@@ -49,21 +49,28 @@ const runTsViewer = async () => {
   });
 
   while (true) {
+    // a hung paint (HID/sharp) is what the watchdog exists for - it must not
+    // be masked by the error handling below
+    let paintHung = false;
     try {
       logger.debug("TsBackend.getClients()");
       setStage("fetch clients");
       const clients = await withTimeout(
         "getClients",
-        config.fetchTimeoutMs,
+        // the backend's own (shorter) timeout fires first and drops the
+        // connection; this is only the safety net behind it
+        config.fetchTimeoutMs + 5000,
         TsBackend.getClients({}),
       );
       if (isShuttingDown()) break;
       setStage("paint");
+      paintHung = true;
       await withTimeout(
         "TsDrawClients",
         config.paintTimeoutMs,
         TsDrawClients(clients),
       );
+      paintHung = false;
       beat();
       setStage("sleep");
       // interruptible: backend events wake the loop immediately instead of
@@ -82,11 +89,14 @@ const runTsViewer = async () => {
         "error tile",
         config.paintTimeoutMs,
         paintStatusScreen(streamDeck, "err", "red", "fetch error"),
-      ).catch((e: unknown) => logger.warn(`error tile failed: ${e}`));
-      // a fast failure (e.g. TS server down: connection refused) means the
-      // loop is alive and handling it. A timeout means something is hung, so
-      // no beat: the watchdog restarts us if it keeps happening.
-      if (!(err instanceof TimeoutError)) beat();
+      ).catch((e: unknown) => {
+        paintHung = paintHung || e instanceof TimeoutError;
+        logger.warn(`error tile failed: ${e}`);
+      });
+      // fetch failures (refused, or a slow/dead server that the backend
+      // handles by reconnecting) mean the loop is alive. Only a hung paint
+      // counts as wedged: no beat, so the watchdog restarts us if it persists.
+      if (!paintHung) beat();
       setStage("error sleep");
       // also interruptible: a reconnect event retries right away
       await waitForRefresh(config.idleTimeError);

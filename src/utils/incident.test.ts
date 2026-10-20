@@ -28,3 +28,22 @@ test("countRecentIncidents only counts files younger than the window", async () 
   expect(countRecentIncidents(7, Date.now(), dir)).toBe(1);
   expect(countRecentIncidents(7, Date.now(), "/nonexistent-dir")).toBe(0);
 });
+
+test("findActiveLogFile picks the most recently written rotated sibling", async () => {
+  const { utimesSync, writeFileSync } = await import("node:fs");
+  const dir = mkdtempSync(path.join(tmpdir(), "incident-log-"));
+  for (const [name, ageS] of [
+    ["app.log", 300],
+    ["app1.log", 10],
+    ["app19.log", 600],
+    ["other.log", 0],
+  ] as const) {
+    writeFileSync(path.join(dir, name), "x");
+    const t = Date.now() / 1000 - ageS;
+    utimesSync(path.join(dir, name), t, t);
+  }
+  const { findActiveLogFile } = await import("./incident");
+  expect(findActiveLogFile(path.join(dir, "app.log"))).toBe(
+    path.join(dir, "app1.log"),
+  );
+});
