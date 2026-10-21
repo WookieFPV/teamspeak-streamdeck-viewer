@@ -42,5 +42,8 @@
     "bun-types": "^1.4.2",
     "concurrently": "10.0.5",
     "typescript": "7"
+  },
+  "overrides": {
+    "shell-quote": "^1.11.0"
   }
 }
